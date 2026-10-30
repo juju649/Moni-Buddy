@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moni-Buddy Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #eef3f4;
+    --panel: #ffffff;
+    --ink: #14282e;
+    --muted: #5d7279;
+    --line: #d5e0e3;
+    --teal: #0f6b73;
+    --ok: #2f8f5b;
+    --warn: #c98a12;
+    --alert: #c7382d;
+    --alert-bg: #fdecea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    background: var(--teal);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; }
+  header .who { opacity: .85; font-size: .95rem; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #7ee2a8; }
+  main { max-width: 980px; margin: 0 auto; padding: 18px; display: grid; gap: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  h2 { margin: 0 0 12px; font-size: 1.05rem; }
+
+  #alert {
+    display: none;
+    background: var(--alert-bg);
+    border: 2px solid var(--alert);
+    border-radius: 10px;
+    padding: 16px 18px;
+    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  #alert.show { display: flex; }
+  #alert strong { color: var(--alert); font-size: 1.05rem; }
+  button.ack {
+    background: var(--alert);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button.ack:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #ackNote { display: none; color: var(--ok); font-weight: 600; }
+  #ackNote.show { display: block; }
+
+  .state { display: flex; flex-wrap: wrap; gap: 28px; align-items: baseline; }
+  .state .label { color: var(--muted); font-size: .85rem; }
+  .big { font-size: 1.6rem; font-weight: 700; }
+  .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; color: #fff; font-weight: 600; font-size: .9rem; }
+  .low { background: var(--ok); } .mod { background: var(--warn); } .high { background: var(--alert); }
+  .insight { margin: 14px 0 0; padding: 12px 14px; background: var(--bg); border-left: 4px solid var(--teal); border-radius: 4px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+
+  ul.timeline { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; }
+  ul.timeline li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: center; }
+  ul.timeline .t { color: var(--muted); width: 74px; flex-shrink: 0; font-size: .9rem; }
+  ul.timeline .s { flex: 1; }
+  ul.timeline .r { font-size: .85rem; color: var(--muted); }
+  .chartbox { position: relative; height: 300px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Moni-Buddy</h1>
+    <div class="who">Patient: <span id="patientName">Test Patient</span> (<span id="patientId">p1</span>)</div>
+  </div>
+  <div class="status"><span class="dot"></span><span id="syncText">Edge online</span></div>
+</header>
+
+<main>
+  <section id="alert" role="alert">
+    <div>
+      <strong>Alert needs your attention</strong>
+      <div id="alertText"></div>
+    </div>
+    <button class="ack" id="ackBtn">Acknowledge alert</button>
+  </section>
+  <div id="ackNote" class="panel"></div>
+
+  <section class="panel">
+    <h2>Current status</h2>
+    <div class="state">
+      <div><div class="label">State</div><div class="big" id="curState"></div></div>
+      <div><div class="label">Heart rate</div><div class="big"><span id="curHr"></span> bpm</div></div>
+      <div><div class="label">Risk level</div><span class="pill" id="curRisk"></span></div>
+      <div><div class="label">Last event</div><div id="curTime"></div></div>
+    </div>
+    <p class="insight" id="insight"></p>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>Event timeline</h2>
+      <ul class="timeline" id="timeline"></ul>
+    </section>
+    <section class="panel">
+      <h2>Risk trend</h2>
+      <div class="chartbox"><canvas id="riskChart"></canvas></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  // ---- FAKE DATA: same fields as the Supabase "events" table. ----
+  // Later: replace this array with a fetch() call to the FastAPI backend.
+  const events = [
+    { event_id: "e1", patient_id: "p1", state: "normal",          risk: 0.12, hr: 72,  timestamp: "2026-10-30T08:00:00Z", acknowledged_by: null, acknowledged_at: null },
+    { event_id: "e2", patient_id: "p1", state: "normal",          risk: 0.15, hr: 76,  timestamp: "2026-10-30T08:30:00Z", acknowledged_by: null, acknowledged_at: null },
+    { event_id: "e3", patient_id: "p1", state: "elevated_hr",     risk: 0.55, hr: 104, timestamp: "2026-10-30T09:10:00Z", acknowledged_by: "Maryam", acknowledged_at: "2026-10-30T09:15:00Z" },
+    { event_id: "e4", patient_id: "p1", state: "normal",          risk: 0.20, hr: 80,  timestamp: "2026-10-30T09:45:00Z", acknowledged_by: null, acknowledged_at: null },
+    { event_id: "e5", patient_id: "p1", state: "irregular_rhythm", risk: 0.68, hr: 96,  timestamp: "2026-10-30T10:20:00Z", acknowledged_by: "Maryam", acknowledged_at: "2026-10-30T10:24:00Z" },
+    { event_id: "e6", patient_id: "p1", state: "normal",          risk: 0.18, hr: 74,  timestamp: "2026-10-30T11:00:00Z", acknowledged_by: null, acknowledged_at: null },
+    { event_id: "e7", patient_id: "p1", state: "low_hr",          risk: 0.48, hr: 48,  timestamp: "2026-10-30T11:40:00Z", acknowledged_by: null, acknowledged_at: null },
+    { event_id: "e8", patient_id: "p1", state: "elevated_hr",     risk: 0.82, hr: 128, timestamp: "2026-10-30T12:15:00Z", acknowledged_by: null, acknowledged_at: null }
+  ];
+
+  const STATE_NAMES = {
+    normal: "Normal",
+    elevated_hr: "Elevated heart rate",
+    low_hr: "Low heart rate",
+    irregular_rhythm: "Irregular rhythm"
+  };
+  const INSIGHTS = {
+    normal: "Everything looks steady. No action needed.",
+    elevated_hr: "Your heart rate was higher than usual while resting. Consider sitting down, and contact your doctor if it continues.",
+    low_hr: "Your heart rate was lower than usual. If you feel dizzy or faint, sit down and contact your doctor.",
+    irregular_rhythm: "Your heartbeat looked uneven for a short time. Share this with your doctor at your next check-in."
+  };
+
+  const fmtTime = iso => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const riskLevel = r => r < 0.4 ? ["Low", "low"] : r < 0.7 ? ["Moderate", "mod"] : ["High", "high"];
+
+  let chart;
+
+  function render() {
+    events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const latest = events[events.length - 1];
+
+    // Current status card
+    document.getElementById("curState").textContent = STATE_NAMES[latest.state] || latest.state;
+    document.getElementById("curHr").textContent = latest.hr;
+    document.getElementById("curTime").textContent = fmtTime(latest.timestamp);
+    const [lvlText, lvlClass] = riskLevel(latest.risk);
+    const pill = document.getElementById("curRisk");
+    pill.textContent = lvlText + " (" + latest.risk.toFixed(2) + ")";
+    pill.className = "pill " + lvlClass;
+    document.getElementById("insight").textContent = INSIGHTS[latest.state] || "";
+    document.getElementById("syncText").textContent = "Edge online \u00b7 last sync " + fmtTime(latest.timestamp);
+
+    // Alert banner: newest high-risk event nobody has acknowledged yet
+    const pending = events.filter(e => e.risk >= 0.7 && !e.acknowledged_at).pop();
+    const banner = document.getElementById("alert");
+    if (pending) {
+      document.getElementById("alertText").textContent =
+        (STATE_NAMES[pending.state] || pending.state) + " at " + fmtTime(pending.timestamp) + " (" + pending.hr + " bpm).";
+      banner.classList.add("show");
+      banner.dataset.id = pending.event_id;
+    } else {
+      banner.classList.remove("show");
+    }
+
+    // Timeline (newest first)
+    const list = document.getElementById("timeline");
+    list.innerHTML = "";
+    [...events].reverse().forEach(e => {
+      const [txt, cls] = riskLevel(e.risk);
+      const li = document.createElement("li");
+      const ackText = e.acknowledged_at ? "Acknowledged by " + e.acknowledged_by : (e.risk >= 0.7 ? "Not acknowledged" : "");
+      li.innerHTML =
+        '<span class="t">' + fmtTime(e.timestamp) + '</span>' +
+        '<span class="s">' + (STATE_NAMES[e.state] || e.state) + ' \u00b7 ' + e.hr + ' bpm<div class="r">' + ackText + '</div></span>' +
+        '<span class="pill ' + cls + '">' + txt + '</span>';
+      list.appendChild(li);
+    });
+
+    // Risk chart
+    const labels = events.map(e => fmtTime(e.timestamp));
+    const data = events.map(e => e.risk);
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("riskChart"), {
+      type: "line",
+      data: { labels, datasets: [{ label: "Risk", data, borderColor: "#0f6b73", backgroundColor: "rgba(15,107,115,.12)", fill: true, tension: .25, pointRadius: 4 }] },
+      options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 1, title: { display: true, text: "Risk score" } } }, plugins: { legend: { display: false } } }
+    });
+  }
+
+  document.getElementById("ackBtn").addEventListener("click", () => {
+    const id = document.getElementById("alert").dataset.id;
+    const ev = events.find(e => e.event_id === id);
+    if (!ev) return;
+    ev.acknowledged_by = "Maryam";            // later: the logged-in user
+    ev.acknowledged_at = new Date().toISOString();
+    const note = document.getElementById("ackNote");
+    note.textContent = "Acknowledged by " + ev.acknowledged_by + " at " + fmtTime(ev.acknowledged_at) + ".";
+    note.classList.add("show");
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
