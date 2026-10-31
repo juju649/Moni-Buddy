@@ -1,16 +1,18 @@
-import httpx
-from uuid import uuid4
 from datetime import datetime
-from models.healthState import HealthState
-from twin import DigitalTwin
-from signalProcessing import processSignals
-from trendAnalysis import TrendAnalyzer
+from uuid import uuid4
+
+from edge.models.healthState import HealthState
+from edge.twin import DigitalTwin
+from edge.signalProcessing import processSignals
+from edge.trendAnalysis import TrendAnalyzer
+
+import httpx
 
 # Create the digital twin
 twin = DigitalTwin()
 
 # Process ECG and PPG data
-results = processSignals("data/sampleData.csv")
+results = processSignals("edge/data/sampleData.csv")
 
 print("Moni-Buddy")
 print("----------------------")

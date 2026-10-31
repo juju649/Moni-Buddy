@@ -1,5 +1,5 @@
-from models.healthState import HealthState
-from baseline import PersonalBaseline
+from edge.models.healthState import HealthState
+from edge.baseline import PersonalBaseline
 
 
 class DigitalTwin:
