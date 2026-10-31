@@ -5,6 +5,6 @@ from datetime import datetime
 class HealthState:
     heartRate: float
     hrv: float
-    spo2: float
+    spo2: float | None
     signalQuality: float
     timestamp: datetime

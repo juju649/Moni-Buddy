@@ -1,58 +1,52 @@
 from datetime import datetime
 from models.healthState import HealthState
 from twin import DigitalTwin
+from signalProcessing import processSignals
 from trendAnalysis import TrendAnalyzer
 
-
+# Create the digital twin
 twin = DigitalTwin()
 
-readings = [
-    HealthState(heartRate=70, hrv=45, spo2=98,
-                signalQuality=0.95, timestamp=datetime.now()),
+# Process ECG and PPG data
+results = processSignals("data/sampleData.csv")
 
-    HealthState(heartRate=72, hrv=43, spo2=98,
-                signalQuality=0.92, timestamp=datetime.now()),
-
-    HealthState(heartRate=75, hrv=40, spo2=97,
-                signalQuality=0.90, timestamp=datetime.now())
-]
-
-for reading in readings:
-    twin.update(reading)
-
-print("\nTwinGuard Digital Twin")
+print("Moni-Buddy")
 print("----------------------")
 
-print("Current state:")
-print(twin.getCurrentState())
+# Check signal quality before updating the twin
+if results["status"] == "success":
 
-print("\nPersonal baseline:")
-print(twin.getPersonalBaseline())
+    # Create a health state using processed measurements
+    healthState = HealthState(
+        heartRate=results["heartRate"],
+        hrv=results["hrv"],
+        spo2=None,
+        signalQuality=results["signalQuality"],
+        timestamp=datetime.now()
+    )
 
-# Test trend analysis
+    # Update the digital twin
+    twin.update(healthState)
 
-newReading = HealthState(
-    heartRate=85,
-    hrv=35,
-    spo2=97,
-    signalQuality=0.95,
-    timestamp=datetime.now()
-)
+    print("\nProcessed Measurements:")
+    print("Heart Rate:", healthState.heartRate, "BPM")
+    print("HRV:", healthState.hrv, "ms")
+    print("SpO2: Not available")
+    print("Signal Quality:", healthState.signalQuality)
 
-analyzer = TrendAnalyzer()
+    print("\nPersonal Baseline:")
+    print(twin.getPersonalBaseline())
 
-trendResults = analyzer.analyze(
-    newReading,
-    twin.getPersonalBaseline()
-)
+    # Analyze trends against the personal baseline
+    analyzer = TrendAnalyzer()
 
-print("\nTrend Analysis:")
-print("----------------------")
+    trendResults = analyzer.analyze(
+        healthState,
+        twin.getPersonalBaseline()
+    )
 
-for name, result in trendResults["measurements"].items():
-    print(f"\n{name}:")
-    print(f"  Current: {result['current']}")
-    print(f"  Baseline: {result['baseline']}")
-    print(f"  Difference: {result['difference']}")
-    print(f"  Change: {result['percentChange']}%")
-    print(f"  Trend: {result['trend']}")
+    print("\nTrend Analysis:")
+    print(trendResults)
+
+else:
+    print("Poor signal quality. Digital twin was not updated.")
