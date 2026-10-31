@@ -1,3 +1,5 @@
+import httpx
+from uuid import uuid4
 from datetime import datetime
 from models.healthState import HealthState
 from twin import DigitalTwin
@@ -50,3 +52,24 @@ if results["status"] == "success":
 
 else:
     print("Poor signal quality. Digital twin was not updated.")
+
+    # Prepare event data for the backend
+eventData = {
+    "event_id": str(uuid4()),
+    "patient_id": "p1",
+    "state": "normal",
+    "risk": 0.0,
+    "hr": round(healthState.heartRate),
+    "timestamp": datetime.now().astimezone().isoformat()
+}
+
+# Send event to FastAPI
+response = httpx.post(
+    "http://127.0.0.1:8000/events",
+    json=eventData,
+    timeout=10
+)
+
+print("\nBackend Response:")
+print(response.status_code)
+print(response.json())
