@@ -134,16 +134,9 @@
 <script>
   // ---- FAKE DATA: same fields as the Supabase "events" table. ----
   // Later: replace this array with a fetch() call to the FastAPI backend.
-  const events = [
-    { event_id: "e1", patient_id: "p1", state: "normal",          risk: 0.12, hr: 72,  timestamp: "2026-10-30T08:00:00Z", acknowledged_by: null, acknowledged_at: null },
-    { event_id: "e2", patient_id: "p1", state: "normal",          risk: 0.15, hr: 76,  timestamp: "2026-10-30T08:30:00Z", acknowledged_by: null, acknowledged_at: null },
-    { event_id: "e3", patient_id: "p1", state: "elevated_hr",     risk: 0.55, hr: 104, timestamp: "2026-10-30T09:10:00Z", acknowledged_by: "Juju", acknowledged_at: "2026-10-30T09:15:00Z" },
-    { event_id: "e4", patient_id: "p1", state: "normal",          risk: 0.20, hr: 80,  timestamp: "2026-10-30T09:45:00Z", acknowledged_by: null, acknowledged_at: null },
-    { event_id: "e5", patient_id: "p1", state: "irregular_rhythm", risk: 0.68, hr: 96,  timestamp: "2026-10-30T10:20:00Z", acknowledged_by: "Juju", acknowledged_at: "2026-10-30T10:24:00Z" },
-    { event_id: "e6", patient_id: "p1", state: "normal",          risk: 0.18, hr: 74,  timestamp: "2026-10-30T11:00:00Z", acknowledged_by: null, acknowledged_at: null },
-    { event_id: "e7", patient_id: "p1", state: "low_hr",          risk: 0.48, hr: 48,  timestamp: "2026-10-30T11:40:00Z", acknowledged_by: null, acknowledged_at: null },
-    { event_id: "e8", patient_id: "p1", state: "elevated_hr",     risk: 0.82, hr: 128, timestamp: "2026-10-30T12:15:00Z", acknowledged_by: null, acknowledged_at: null }
-  ];
+  const API_URL = "http://127.0.0.1:8000";
+  const PATIENT_ID = "p1";
+  let events = [];
 
   const STATE_NAMES = {
     normal: "Normal",
@@ -227,7 +220,19 @@
     render();
   });
 
-  render();
+  async function loadEvents() {
+  try {
+    const res = await fetch(API_URL + "/patients/" + PATIENT_ID + "/events?limit=50");
+    if (!res.ok) throw new Error("API returned " + res.status);
+    events = await res.json();
+  } catch (err) {
+    document.getElementById("syncText").textContent = "API offline";
+    console.error(err);
+  }
+  if (events.length) render();
+}
+loadEvents();
+setInterval(loadEvents, 5000);
 </script>
 </body>
 </html>
