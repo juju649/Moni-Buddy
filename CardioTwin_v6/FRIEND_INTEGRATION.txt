@@ -1,0 +1,74 @@
+HOW TO CONNECT THE HARDWARE TO THE MONI-BUDDY SOFTWARE
+EXPERIMENTAL student prototype. Not a medical device.
+
+THE IDEA
+The AFE sends signals to the laptop (today) or the SK-AM62B (goal). A small program, edge_publisher.py, analyzes the signal every 5 seconds and sends one event to the Moni-Buddy backend over HTTP. The backend stores it in Supabase. The dashboard shows it.
+
+  AFE4950EVM --USB--> laptop or SK-AM62B --HTTP POST /events--> FastAPI backend --> Supabase --> dashboard
+
+Your friend never plugs into the AFE. Only the network connects the two sides.
+HTTP fits because the backend already exposes POST /events. MQTT would need a broker and new code on both sides, so skip it unless your friend asks for it.
+
+THE MESSAGE
+Every 5 seconds the publisher sends this JSON:
+
+  {"event_id": "uuid", "patient_id": "p1", "state": "normal",
+   "risk": 0.1, "hr": 94, "timestamp": "2026-11-20T20:00:00Z"}
+
+state is one of: normal, elevated_hr, low_hr, irregular_rhythm.
+risk is a demo number from 0 to 1. It is not a clinical score.
+Windows with poor signal quality (below 55 out of 100) send nothing.
+
+WHAT YOUR FRIEND DOES
+1. Run the backend so other machines reach it. Example:
+     uvicorn main:app --host 0.0.0.0 --port 8000
+   The module name may differ. Use the name of the real file.
+2. Find the machine's IP address. In Windows: ipconfig, then read IPv4 Address, for example 192.168.1.23.
+3. Allow port 8000 through Windows Firewall (a prompt appears the first time, choose Allow on private networks).
+4. Test from your laptop:
+     curl http://192.168.1.23:8000/docs
+   A page of text or the FastAPI docs means the backend is reachable.
+5. Tell you the facts below.
+
+FACTS TO CONFIRM WITH YOUR FRIEND (I assumed the first two)
+- Endpoint path. I assumed POST /events.
+- Authentication. I assumed none. If there is a key, run the publisher with
+     --header "Authorization: Bearer THE_KEY"
+  or whatever header name the backend expects.
+- Required fields. I send event_id, patient_id, state, risk, hr and timestamp.
+- Which patient_id the dashboard shows. I use p1. Change it with --patient.
+- Language and framework: FastAPI on Python, per the earlier notes.
+
+WHAT YOU DO
+Quick check, no hardware (replay of your real recording):
+  python edge_publisher.py --url http://192.168.1.23:8000 --replay data/AFE4950_CAPTURED_DATA.csv --speed 5
+Preview without sending:
+  python edge_publisher.py --dry-run --replay data/AFE4950_CAPTURED_DATA.csv --speed 20
+Live, AFE plugged into the laptop (prime it with the TI GUI first, then close the GUI):
+  python edge_publisher.py --url http://192.168.1.23:8000
+Live from the SK-AM62B (after it has a network and numpy):
+  python3 edge_publisher.py --url http://192.168.1.23:8000
+
+SAME NETWORK
+The laptop (or board) and your friend's machine must reach each other.
+- Home or lab Wi-Fi or router: usually works.
+- Venue or campus Wi-Fi: often blocks device-to-device traffic. Use a phone hotspot for both machines, or a direct Ethernet cable.
+- Direct cable between the SK-AM62B and a laptop: set static IPs, for example board 192.168.7.2 and laptop 192.168.7.1, then use http://192.168.7.1:8000.
+- Remote friend: use a public URL for the backend (a deployed server or a tunnel) and keep the key secret.
+
+WHEN THE NETWORK DROPS
+Events that fail go into data/publish_queue.jsonl. They send in order when the connection returns. Nothing is lost if you restart the program.
+
+HONEST STATUS
+- The publisher passed a test against a mock server, including failures, retry, queue and a custom header.
+- It has not talked to your friend's real backend yet. Step 1 of the Claude Code prompt covers that test.
+- Live mode has not run on the real AFE yet.
+- Every event from a replay uses real data from your recorded capture, with a new timestamp. Say so when you demo it.
+
+UPDATE (Nov 17)
+- Dashboard, SK-AM62B board tab: "Send the board's results to the Moni-Buddy backend" posts events to BACKEND/events.
+  Backend needs SUPABASE_URL and SUPABASE_KEY in .env, run with: uvicorn main:app --host 0.0.0.0 --port 8000
+- Friend's page: open index_live.html?api=http://BACKEND_IP:8000&patient=p1 (shows live events, not fake ones).
+- Optional: ack_endpoint.py adds an acknowledge route to main.py.
+- The "simulated alert" button sends a fixed high-heart-rate event. Say it is simulated.
+- ESP32 watch: esp32_watch.ino polls http://LAPTOP_IP:8080/latest.txt (start the watch server in the same tab). UNTESTED on hardware.
