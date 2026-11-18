@@ -1,0 +1,22 @@
+{
+  "source_file": "AFE4950_CAPTURED_DATA.csv",
+  "generated_utc": "2026-11-18T04:57:19Z",
+  "duration_s": 61.46,
+  "ecg_sample_rate_hz": 500.0,
+  "ppg_sample_rate_hz": 50.0,
+  "ecg_samples": 30730,
+  "ppg_samples": 3073,
+  "ecg_beats": 94,
+  "ppg_peaks": 95,
+  "ecg_ppg_matches": 94,
+  "heart_rate_ecg_bpm": 93.17,
+  "heart_rate_ppg_bpm": 93.75,
+  "rmssd_ms": 26.8,
+  "snr_db": 18.5,
+  "signal_quality": 97.3,
+  "signal_quality_label": "GOOD",
+  "breathing_per_min_experimental": 16.2,
+  "ecg_polarity_flipped": false,
+  "quality_notes": [],
+  "disclaimer": "Experimental student prototype. Not a medical device. Does not diagnose."
+}

@@ -1,0 +1,14 @@
+{
+  "baseline_hr": null,
+  "baseline_rmssd_ms": null,
+  "last": {
+    "t": 8.0,
+    "wall_time": "2026-11-12T13:51:56",
+    "hr": 97.1,
+    "hrv_rmssd_ms": 35.7,
+    "resp_bpm_experimental": null,
+    "sqi": 91.8,
+    "quality": "GOOD",
+    "alerts": []
+  }
+}

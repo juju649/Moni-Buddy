@@ -1,0 +1,95 @@
+PASTE EVERYTHING BELOW THIS LINE INTO CLAUDE CODE (VS Code, Agent mode, CardioTwin folder open)
+==========================================================================================
+
+ROLE
+You are my senior embedded Linux engineer, hardware integration engineer and IoT software engineer. I am in Round 3 of the HackEdge 2026 Track 1 "Edge Digital Twin" hackathon. The final demo is Nov 20, 2026. I am a Computer Engineering student, so explain each step in plain words and give exact Windows commands.
+
+GOAL (updated, this replaces the generic chain)
+I do NOT need to send data to my teammate for the demo. My required architecture is:
+recorded AFE4950 data (CSV) -> SK-AM62B processes it -> finished results go to my CardioTwin Streamlit dashboard on my laptop -> dashboard displays them.
+The laptop must do no signal processing in this mode. Live AFE data through the board is a later bonus.
+Already built: board_processor.py (pure Python, no numpy, matches pipeline.py to 1e-14 on my capture), board_link.py (dashboard reader), and the "SK-AM62B board" tab. The link is the debug micro-USB console (115200 baud). It is tested only against a simulated board on the laptop and a pty. It has NOT run on the real board.
+
+WORKING RULES
+1. Audit before you change anything. Read every file in this folder first. Do not rebuild features that already work.
+2. Follow the manuals in docs/ and the facts below. Never invent pins, addresses, register values, device-tree settings, driver names or voltages. If a fact is missing, name the exact document you need and ask me.
+3. Do not flash, erase, change boot switches, change the bootloader or edit device-tree files without explaining the step and getting my approval.
+4. Prefer small reversible changes. Run read-only commands first.
+5. Never present simulated or recorded data as live hardware data. Label every replay and every simulated alert.
+6. This is not a medical device. Never claim a diagnosis. Keep the disclaimer in the UI.
+7. Do not rebuild the Linux kernel. Use the image that already boots.
+8. Work one step at a time. After each step tell me what to run, what I should see, and wait for my result before any hardware-dependent change.
+
+FACTS ALREADY ESTABLISHED (do not redo these)
+Hardware and host
+- Boards: TI AFE4950EVM and TI SK-AM62B. Host laptop runs Windows 11. Editor is VS Code.
+- SK-AM62B power: USB-C PD charger into J11 (5 to 15 V, 3 A or more).
+- SK-AM62B console: micro-USB J15 shows four COM ports on my laptop (COM11 to COM14). COM11 is the Linux console at 115200 baud. COM14 echoes helper-core IPC.
+- The board boots Armbian 26.08 (Debian trixie, kernel 6.18.38-vendor-k3) from a microSD card. It is not the TI Processor SDK image. I completed the first-boot wizard and created a user. Linux login works.
+- Board Python is 3.13.5. numpy is NOT installed. The board has no internet. I have NO Ethernet cable yet.
+- The board USB-A host port is USB1 (xhci at 0x31100000) with a 500 mA limit. The boot partition is FAT (mmcblk1p1) and auto-mounts at /boot.
+
+AFE link (important, differs from a generic SPI or I2C design)
+- The AFE4950EVM talks to a host over USB CDC serial. It does NOT use SPI or I2C to the AM62B. Do not design SPI, I2C or device-tree work for it.
+- Evidence: at boot the board saw the AFE as a full-speed USB device (VID 2047, PID 0300) with two cdc_acm interfaces (ttyACM0 and ttyACM1). About 12.9 seconds after boot the device disconnected and never came back. The cause is unknown. The replug test was never completed.
+- TI capture protocol, taken from TI's own BASE_PROFILE1 scripts (searchPort.py, regCapture.py): send "C:CDC?" and the device answers CAPTURE or REG_EDIT. Baud 128000. Start with "C:CAP_START" plus two hex digits plus eight hex digits. Stop with "C:CAP_STOP". Data arrives as tab-separated hex text lines of 24-bit signed words. Volts = code x 1.2 / 2^21. The word order is in the *_FIFO_SEQ.cfg file. The registers must be programmed first by the TI GUI (import AFE4950_Settings.cfg). The 11-word cycle holds 10 ECG words and 1 PPG word. ECG is 500 Hz, PPG is 50 Hz.
+
+Software already written in this folder (read these first)
+- pipeline.py: ECG band-pass 0.5 to 40 Hz, R-peaks, heart rate, RMSSD, PPG band-pass 0.5 to 4 Hz, signal quality score 0 to 100 (display threshold 55).
+- afe_serial.py: live USB reader built from TI's protocol. Tested only against a simulated AFE. NOT tested on the real board.
+- source.py: ReplaySource and LiveSource. twin.py: digital twin with baseline and offline queue.
+- dashboard.py: Streamlit app (live monitor, recording review, Connect AFE, Moni-Buddy export, About).
+- edge_publisher.py: sends one event every 5 seconds to the teammate backend with a disk queue and retry. Tested against a mock server only. NOT tested against the real backend.
+- analyze_signals.py, pushevents.py, make_demo_csv.py, data/AFE4950_CAPTURED_DATA.csv (61 s real capture: 94 beats, 93 BPM ECG, 94 BPM PPG, signal quality 97).
+- boardkit (offline package kit for the board) was built but never run on the board.
+
+Teammate software
+- Python FastAPI backend with Supabase and a static Chart.js dashboard.
+- Event schema: event_id, patient_id, state, risk, hr, timestamp (also acknowledged_by and acknowledged_at, set by the dashboard). The sender POSTs to BACKEND_URL/events.
+- Not yet confirmed with my teammate: the exact endpoint path, authentication, and the address of the machine that runs the backend.
+
+STATUS OF THE SIX MENTOR PHASES
+1. Hardware verification and AFE configuration: PARTIAL. AFE configured through the TI GUI on the laptop. AFE seen by the board but the USB link drops.
+2. SK-AM62B Linux boot and OS setup: PARTIAL. Boots and logs in. No Ethernet, no SSH, no auto-start, nothing of mine run on the board yet.
+3. AFE to AM62B communication: BLOCKED by the USB drop. No data read on the board.
+4. Data acquisition and validation: DONE on the laptop from a recorded capture. Live reader written and simulator-tested.
+5. Hardware to teammate software: PARTIAL. Publisher written and mock-tested. No board network.
+6. Live integration and demo: NOT STARTED.
+
+YOUR TASKS, IN THIS ORDER
+STEP 0. Audit.
+Inspect the whole folder. Create PROJECT_AUDIT.md, IMPLEMENTATION_STATUS.md and REMAINING_TASKS.md. Mark each task COMPLETED, PARTIALLY COMPLETED, NOT STARTED or BLOCKED. Check my facts above against the code and tell me about any mismatch.
+
+STEP 1. Put board_processor.py on the real board (top priority).
+Help me copy board_processor.py and the CSV to the microSD boot partition (folder ct), run the test command on the board, check the board time per step stays under 1000 ms, then connect the dashboard over the serial link and fix whatever breaks. Check the board output with: python3 /boot/ct/board_processor.py --once --fast | head -n 5
+
+STEP 1B. Laptop bridge (optional now, only if I later want to send events to my teammate) (the safe demo path, works without board networking).
+Goal: AFE over USB into the laptop, CardioTwin reads it, edge_publisher.py sends events to my teammate's backend.
+- Walk me through priming the AFE with the TI GUI, closing the GUI, then running: python edge_publisher.py --url BACKEND_URL
+- Walk me through testing the teammate backend with edge_publisher.py --replay first, then live.
+- Fix whatever breaks. If the live reader gets no data, read the raw lines it prints and compare them with the TI protocol above. Do not guess.
+- Help me confirm the event appears in the teammate dashboard.
+This path must work before anything else, because it is the fallback demo.
+
+STEP 2. Teammate integration.
+Write SOFTWARE_INTEGRATION.md for my teammate: how to run the backend so another machine reaches it (host 0.0.0.0, firewall, IP address), the endpoint and event format, how to test with curl, and what to do if the venue Wi-Fi blocks device-to-device traffic (use a phone hotspot or a direct cable). Ask me for the four facts I still lack: language and framework, existing endpoint path, authentication, expected data format.
+
+STEP 3. Find out why the AFE USB link drops on the board.
+Use read-only commands first. Collect: lsusb -t, dmesg with timestamps around the disconnect, any over-current or power messages, which port the AFE uses, and the AFE supply source. Run the replug test (unplug and replug the AFE USB cable after boot and capture dmesg). Test a powered USB hub between the board and the AFE if I have one. Report the most likely cause with evidence. Do not change the kernel or device tree.
+
+STEP 4. Network for the board.
+I have no Ethernet cable. Recommend the lowest-risk option and what to buy or borrow. Options to evaluate: a direct Ethernet cable from the laptop to the board with static IPs, the board on the same router as the laptop, or a USB Ethernet or Wi-Fi adapter on the board USB-A port (check driver support first with lsusb and dmesg, do not assume it works). Then enable and test SSH from Windows. Give exact commands.
+
+STEP 5. Run the pipeline on the board.
+numpy and scipy are missing and the board has no internet. Prepare wheels on the laptop for aarch64 and Python 3.13 (pip download with --platform manylinux2014_aarch64 --python-version 3.13 --only-binary=:all:) and install them on the board from a USB drive or the SD card with pip install --no-index. Check each wheel exists before relying on it. If scipy does not fit, tell me, and propose the fallback: the board only acquires and forwards, and the laptop analyzes. Then run afe_serial.py on the board against the real AFE and compare the numbers with the laptop run.
+
+STEP 6. Board to backend.
+Run edge_publisher.py on the board so events go to the teammate backend over the network. Test disconnect and reconnect (unplug the network, wait, replug, confirm queued events arrive). Then create a systemd service that starts it after boot. Do not enable auto-start until manual tests pass. Add a health check.
+
+STEP 7. Tests and deliverables.
+Run this test order and record objective, commands, expected output, actual result and pass or fail for each: Linux boot, network, USB device detection, AFE communication, AFE configuration, real measurement, conversion, local logging, network publishing, teammate receiver, live dashboard, disconnect and reconnect, reboot and auto-start.
+Create README.md, SYSTEM_ARCHITECTURE.md, HARDWARE_CONNECTIONS.md, LINUX_BOOT_GUIDE.md, AFE_INTEGRATION.md, DATA_PIPELINE.md, SOFTWARE_INTEGRATION.md, TESTING_REPORT.md, DEPLOYMENT_GUIDE.md and REMAINING_TASKS.md. Be honest in them: list what is verified on hardware and what is not.
+Also write DEMO_SCRIPT.md: a 5 minute live demo plan with a fallback at each step (replay mode if the AFE drops, laptop bridge if the board network fails).
+
+FINAL INSTRUCTIONS
+Start with STEP 0 now. When the audit is done, show me what is complete, what remains, the biggest blockers, and the next exact action with its commands and expected output. Then wait for my result.
