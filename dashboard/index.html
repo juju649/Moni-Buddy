@@ -80,6 +80,128 @@
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
 
+  .cardiac-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 260px);
+    gap: 20px;
+    align-items: center;
+  }
+  .cardiac-copy p { color: var(--muted); margin: 0 0 14px; }
+  .cardiac-reading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+  .cardiac-reading strong { font-size: 1.2rem; }
+  .cardiac-reading .label, .cardiac-state { color: var(--muted); font-size: .9rem; }
+  .cardiac-credit { margin-top: 16px !important; font-size: .8rem; }
+  .cardiac-credit a { color: var(--teal); }
+  .cardiac-stage {
+    min-height: 238px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #f8fbfb, var(--bg));
+  }
+  .watch-illustration { position: relative; width: 126px; height: 224px; }
+  .watch-strap {
+    position: absolute;
+    left: 34px;
+    width: 58px;
+    height: 78px;
+    background: linear-gradient(90deg, #bcc9cc, #e1e9ea 50%, #bcc9cc);
+  }
+  .watch-strap.top { top: 0; border-radius: 18px 18px 5px 5px; }
+  .watch-strap.bottom { bottom: 0; border-radius: 5px 5px 18px 18px; }
+  .watch-strap::after {
+    content: "";
+    position: absolute;
+    top: 18px;
+    left: 26px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #89999d;
+    box-shadow: 0 16px 0 #89999d, 0 32px 0 #89999d;
+  }
+  .watch-case {
+    position: absolute;
+    inset: 38px 7px;
+    z-index: 1;
+    padding: 6px;
+    border-radius: 30px;
+    background: linear-gradient(145deg, #dce5e6, #aebdc0 55%, #eef3f4);
+    box-shadow: 0 10px 24px rgba(20, 40, 46, .18), inset 0 0 0 1px rgba(255,255,255,.8);
+  }
+  .watch-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff, #f0f5f5);
+  }
+  .watch-ring { position: absolute; inset: 4px 0 auto; width: 100%; }
+  .watch-ring circle { fill: none; stroke-width: 2; }
+  .watch-ring .track { stroke: #d5e0e3; }
+  .watch-heart {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 14px;
+    color: var(--alert);
+    transform: translateX(-50%);
+    animation: watch-heartbeat 1.5s ease-in-out infinite;
+  }
+  .watch-readout {
+    position: absolute;
+    top: 42px;
+    right: 0;
+    left: 0;
+    text-align: center;
+  }
+  .watch-label { color: var(--muted); font-size: 7px; letter-spacing: .12em; }
+  .watch-number { color: var(--ink); font-size: 27px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .watch-number small { color: var(--muted); font-size: 8px; }
+  .watch-state { color: var(--teal); font-size: 8px; }
+  .watch-ecg { position: absolute; right: 10px; bottom: 19px; left: 10px; width: calc(100% - 20px); height: 24px; }
+  .watch-ecg path {
+    fill: none;
+    stroke: var(--alert);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: watch-ecg-draw 3.2s ease-in-out infinite;
+  }
+  .watch-caption {
+    position: absolute;
+    right: 0;
+    bottom: 6px;
+    left: 0;
+    color: var(--muted);
+    font-size: 6px;
+    letter-spacing: .1em;
+    text-align: center;
+  }
+  @keyframes watch-heartbeat {
+    0%, 35%, 100% { transform: translateX(-50%) scale(1); }
+    12% { transform: translateX(-50%) scale(1.2); }
+    22% { transform: translateX(-50%) scale(1); }
+  }
+  @keyframes watch-ecg-draw {
+    0% { stroke-dashoffset: 1; opacity: .35; }
+    60%, 85% { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: .35; }
+  }
+  @media (max-width: 760px) {
+    .cardiac-panel { grid-template-columns: 1fr; }
+    .cardiac-stage { min-height: 230px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .watch-heart, .watch-ecg path { animation: none; }
+    .watch-ecg path { stroke-dashoffset: 0; }
+  }
+
   ul.timeline { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; }
   ul.timeline li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: center; }
   ul.timeline .t { color: var(--muted); width: 74px; flex-shrink: 0; font-size: .9rem; }
@@ -117,6 +239,44 @@
       <div><div class="label">Last event</div><div id="curTime"></div></div>
     </div>
     <p class="insight" id="insight"></p>
+  </section>
+
+  <section class="panel cardiac-panel" aria-labelledby="cardiacTitle">
+    <div class="cardiac-copy">
+      <h2 id="cardiacTitle">Cardiac signal illustration</h2>
+      <p>The watch readout mirrors the latest MoniBuddy event. The animated ECG trace is decorative, not a live waveform or anatomical simulation.</p>
+      <div class="cardiac-reading">
+        <span class="label">Latest event heart rate</span>
+        <strong><span id="watchHr">--</span> bpm</strong>
+        <span class="cardiac-state" id="watchState">Waiting for event</span>
+      </div>
+      <p class="cardiac-credit">Visual concept adapted from <a href="https://github.com/zrr-dev/CardioEdgeTwinAnimation" target="_blank" rel="noopener noreferrer">CardioEdgeTwinAnimation</a>.</p>
+    </div>
+    <div class="cardiac-stage" aria-hidden="true">
+      <div class="watch-illustration">
+        <div class="watch-strap top"></div>
+        <div class="watch-strap bottom"></div>
+        <div class="watch-case">
+          <div class="watch-screen">
+            <svg class="watch-ring" viewBox="0 0 120 120">
+              <circle class="track" cx="60" cy="60" r="52"/>
+            </svg>
+            <svg class="watch-heart" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/>
+            </svg>
+            <div class="watch-readout">
+              <div class="watch-label">LATEST EVENT</div>
+              <div class="watch-number"><span id="watchFaceHr">--</span><small> BPM</small></div>
+              <div class="watch-state" id="watchFaceState">Waiting for event</div>
+            </div>
+            <svg class="watch-ecg" viewBox="0 0 200 40" preserveAspectRatio="none">
+              <path pathLength="1" d="M0 20 L8 20 Q11 15 14 20 L20 20 L22 23 L26 3 L30 33 L33 20 L42 20 Q48 12 54 20 L66 20 L74 20 Q77 15 80 20 L86 20 L88 23 L92 3 L96 33 L99 20 L108 20 Q114 12 120 20 L132 20 L140 20 Q143 15 146 20 L152 20 L154 23 L158 3 L162 33 L165 20 L174 20 Q180 12 186 20 L200 20"/>
+            </svg>
+            <div class="watch-caption">ILLUSTRATIVE TRACE</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <div class="two">
@@ -170,7 +330,12 @@
     // Current status card
     document.getElementById("curState").textContent = STATE_NAMES[latest.state] || latest.state;
     document.getElementById("curHr").textContent = latest.hr;
+    document.getElementById("watchHr").textContent = latest.hr;
+    document.getElementById("watchFaceHr").textContent = latest.hr;
     document.getElementById("curTime").textContent = fmtTime(latest.timestamp);
+    const watchState = STATE_NAMES[latest.state] || latest.state;
+    document.getElementById("watchState").textContent = watchState;
+    document.getElementById("watchFaceState").textContent = watchState;
     const [lvlText, lvlClass] = riskLevel(latest.risk);
     const pill = document.getElementById("curRisk");
     pill.textContent = lvlText + " (" + latest.risk.toFixed(2) + ")";
