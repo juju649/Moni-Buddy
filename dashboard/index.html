@@ -39,6 +39,80 @@
   a { color: inherit; }
   button { font: inherit; }
   [hidden] { display: none !important; }
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background:
+      radial-gradient(ellipse at 12% 18%,rgba(216,207,240,.42),transparent 38%),
+      radial-gradient(ellipse at 90% 82%,rgba(244,208,221,.4),transparent 34%),
+      linear-gradient(125deg,#9299c0 0%,#a6a4c9 37%,#b8accd 65%,#d2afc3 100%);
+  }
+  .login-card {
+    position: relative;
+    width: min(590px,100%);
+    padding: clamp(22px,5vw,40px);
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: 26px;
+    background: rgba(255,255,255,.14);
+    box-shadow: 0 24px 70px rgba(67,59,104,.2),inset 0 1px 0 rgba(255,255,255,.2);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .login-brand { display: flex; align-items: center; gap: 9px; font-size: .95rem; font-weight: 600; }
+  .login-brand svg { width: 25px; height: 25px; }
+  .login-kicker { margin: 28px 0 5px; color: rgba(255,255,255,.78); font-size: .66rem; font-weight: 700; letter-spacing: .14em; }
+  .login-card h1 { margin: 0; font-size: clamp(1.45rem,4vw,2rem); letter-spacing: -.035em; }
+  .login-card .login-demo-toggle { position: absolute; top: clamp(15px,calc(5vw - 7px),33px); right: clamp(22px,5vw,40px); width: 40px; height: 40px; margin-top: 0; }
+  .login-card .login-demo-toggle svg { width: 24px; height: 24px; }
+  .login-form { display: grid; gap: 11px; margin-top: 18px; }
+  .login-profiles { margin-top: 18px; }
+  .login-field { display: grid; gap: 5px; }
+  .login-field label { color: rgba(255,255,255,.86); font-size: .7rem; }
+  .login-field input {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255,255,255,.12);
+  }
+  .login-field input::placeholder { color: rgba(255,255,255,.62); }
+  .login-field input:focus-visible { border-color: rgba(255,255,255,.75); outline: 2px solid rgba(255,255,255,.4); outline-offset: 1px; }
+  .login-submit {
+    min-height: 42px;
+    margin-top: 3px;
+    padding: 9px 14px;
+    border: 1px solid rgba(255,255,255,.42);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255,255,255,.2);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .login-submit:hover, .login-submit:focus-visible { background: rgba(255,255,255,.3); outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; }
+  .login-submit:disabled { opacity: .65; cursor: wait; }
+  .login-error { margin: 0; color: #fff3d4; font-size: .72rem; }
+  .login-profiles { display: grid; gap: 9px; }
+  .login-profile {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,.32);
+    border-radius: 14px;
+    color: #fff;
+    background: rgba(255,255,255,.11);
+    font-size: .87rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background .2s ease,border-color .2s ease,transform .2s ease;
+  }
+  .login-profile:hover, .login-profile:focus-visible { border-color: rgba(255,255,255,.68); background: rgba(255,255,255,.2); transform: translateY(-1px); outline: none; }
   .dashboard-shell {
     position: relative;
     isolation: isolate;
@@ -176,6 +250,43 @@
   .header-icon svg { width: 16px; height: 16px; }
   .profile-avatar { color: #5d5877; background: linear-gradient(145deg,rgba(255,255,255,.92),rgba(239,219,232,.88)); }
   .profile-avatar svg { width: 19px; height: 19px; }
+  .account-control { position: relative; flex: 0 0 auto; }
+  .account-action {
+    display: inline-flex;
+    min-height: 32px;
+    height: 32px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 9px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 999px;
+    color: rgba(255,255,255,.92);
+    background: rgba(255,255,255,.1);
+    font-size: .66rem;
+    cursor: pointer;
+  }
+  .account-action:hover, .account-action:focus-visible { background: rgba(255,255,255,.2); outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
+  .account-action svg { width: 15px; height: 15px; flex: 0 0 auto; }
+  .account-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 25;
+    display: grid;
+    width: min(230px,calc(100vw - 24px));
+    gap: 5px;
+    padding: 11px;
+    border: 1px solid rgba(255,255,255,.32);
+    border-radius: 15px;
+    background: rgba(88,80,119,.96);
+    box-shadow: 0 14px 32px rgba(43,38,67,.24);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .account-menu-name { padding: 4px 8px 8px; border-bottom: 1px solid rgba(255,255,255,.17); font-size: .75rem; }
+  .account-menu button { width: 100%; padding: 8px; border: 0; border-radius: 9px; color: #fff; background: transparent; font-size: .72rem; text-align: left; cursor: pointer; }
+  .account-menu button:hover, .account-menu button:focus-visible { background: rgba(255,255,255,.15); outline: none; }
+  .demo-patient-tag { margin-left: 4px; color: rgba(255,255,255,.84); font-size: .53rem; font-weight: 700; letter-spacing: .08em; }
   .sync-dot {
     width: 8px;
     height: 8px;
@@ -682,6 +793,7 @@
   }
   @media (max-width: 760px) {
     body { display: block; padding: 0; }
+    .login-screen { padding: 15px; }
     .dashboard-shell { display: flex; min-height: 100vh; flex-direction: column; border-radius: 0; }
     .workspace { order: 1; }
     .sidebar { position: sticky; bottom: 0; z-index: 20; order: 2; flex-direction: row; justify-content: space-between; gap: 10px; padding: 8px 17px calc(8px + env(safe-area-inset-bottom,0px)); border-top: 1px solid rgba(255,255,255,.24); border-right: 0; background: rgba(150,148,196,.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
@@ -696,6 +808,8 @@
     .header-actions .connection-copy span { font-size: .57rem; }
     .header-actions .connection-copy small { font-size: .51rem; }
     .header-icon, .profile-avatar { width: 29px; height: 29px; }
+    .account-action { width: 29px; min-height: 29px; height: 29px; justify-content: center; padding: 0; border-radius: 50%; }
+    .account-toggle-name { display: none; }
     .top-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 2px; width: 100%; }
     .top-tab { flex: 1; padding: 7px 4px; font-size: .67rem; text-align: center; }
     .connection { max-width: 155px; padding: 6px 8px; }
@@ -720,6 +834,7 @@
   }
   @media (max-width: 380px) {
     .patient-context { font-size: .62rem; }
+    .demo-patient-tag { font-size: .48rem; }
     .connection { max-width: 132px; }
     .connection-copy span, .connection-copy small { overflow: hidden; text-overflow: ellipsis; }
     .brand-context { flex: 0 0 auto; }
@@ -729,6 +844,7 @@
     .header-actions .connection-copy span { font-size: .53rem; }
     .header-actions .connection-copy small { font-size: .47rem; }
     .header-icon, .profile-avatar { width: 26px; height: 26px; }
+    .account-action { width: 26px; min-height: 26px; height: 26px; }
     .header-icon svg { width: 14px; height: 14px; }
     .profile-avatar svg { width: 17px; height: 17px; }
     .metric-card { min-height: 160px; padding: 10px; }
@@ -746,7 +862,43 @@
 </style>
 </head>
 <body>
-<div class="dashboard-shell">
+<section class="login-screen" id="demoLogin" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <div class="login-card">
+    <div class="login-brand"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l2-5 3.4 9 2.2-5H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.4" opacity=".8"/></svg>MoniBuddy</div>
+    <p class="login-kicker">WELCOME BACK</p>
+    <h1 id="loginTitle">Log in to MoniBuddy</h1>
+    <button class="demo-toggle login-demo-toggle" id="loginDemoToggle" type="button" aria-label="Turn on Demo Mode to choose a demo patient" aria-pressed="false" title="Demo Mode">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <g fill="currentColor">
+          <ellipse cx="12" cy="5.1" rx="2.1" ry="3.1"/>
+          <ellipse cx="18" cy="9.4" rx="2.1" ry="3.1" transform="rotate(72 18 9.4)"/>
+          <ellipse cx="15.7" cy="16.5" rx="2.1" ry="3.1" transform="rotate(144 15.7 16.5)"/>
+          <ellipse cx="8.3" cy="16.5" rx="2.1" ry="3.1" transform="rotate(216 8.3 16.5)"/>
+          <ellipse cx="6" cy="9.4" rx="2.1" ry="3.1" transform="rotate(288 6 9.4)"/>
+        </g>
+        <circle class="demo-flower-center" cx="12" cy="12" r="2.2"/>
+      </svg>
+    </button>
+    <form class="login-form" id="adminLoginForm">
+      <div class="login-field">
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" name="username" type="text" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="login-submit" id="loginSubmit" type="submit">Log In</button>
+      <p class="login-error" id="loginError" role="alert" hidden></p>
+    </form>
+    <div class="login-profiles" id="loginProfiles" hidden>
+      <button class="login-profile" type="button" data-demo-patient="hamantha">Healthy Hamantha</button>
+      <button class="login-profile" type="button" data-demo-patient="sam">Sickly Sam</button>
+    </div>
+  </div>
+</section>
+
+<div class="dashboard-shell" id="dashboardShell" inert>
   <aside class="sidebar" aria-label="MoniBuddy dashboard controls">
     <a class="brand-mark" href="#general" aria-label="Moni-Buddy General">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l2-5 3.4 9 2.2-5H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.4" opacity=".8"/></svg>
@@ -777,7 +929,7 @@
         </a>
         <div class="patient-greeting">
           <span class="greeting">Hello</span>
-          <span class="patient-context">Patient <strong id="patientId">p1</strong></span>
+          <span class="patient-context">Patient <strong id="patientId">Choose demo patient</strong><span class="demo-patient-tag" id="patientKind" hidden>DEMO PATIENT</span></span>
         </div>
       </div>
       <nav class="top-nav" aria-label="Dashboard views">
@@ -797,6 +949,19 @@
         <span class="profile-avatar" role="img" aria-label="Profile placeholder">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="currentColor" opacity=".72"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" fill="currentColor" opacity=".72"/></svg>
         </span>
+        <div class="account-control" id="accountControl">
+          <button class="account-action" id="accountMenuToggle" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Open account menu">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="account-toggle-name" id="accountToggleName">Admin</span>
+          </button>
+          <div class="account-menu" id="accountMenu" role="menu" aria-label="Account options" hidden>
+            <strong class="account-menu-name" id="accountMenuName">Admin</strong>
+            <button type="button" role="menuitem" data-account-action="hamantha">Healthy Hamantha</button>
+            <button type="button" role="menuitem" data-account-action="sam">Sickly Sam</button>
+            <button type="button" role="menuitem" id="returnAdminButton" data-account-action="admin" hidden>Return to admin</button>
+            <button type="button" role="menuitem" data-account-action="logout">Log out</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -804,13 +969,13 @@
       <section id="demoBanner" role="status" hidden>
         <div>
           <strong>DEMO MODE · SIMULATED DATA</strong>
-          <span>Readings vary within a small range around the processed sample baseline. They stay in this browser only; nothing is sent, and the watch is not connected.</span>
+          <span id="demoModeDescription">Fictional patient scenario. Readings stay in this browser only and are never sent to FastAPI or Supabase.</span>
         </div>
       </section>
       <section id="alert" class="alert-banner" role="alert" aria-live="assertive" hidden>
         <div class="alert-copy">
           <span class="alert-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5m0 3h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <div><strong>Alert needs your attention</strong><span id="alertText"></span></div>
+          <div><strong id="alertHeading">Alert needs your attention</strong><span id="alertText"></span></div>
         </div>
         <button class="ack" id="ackBtn" type="button">Acknowledge</button>
       </section>
@@ -985,6 +1150,10 @@
   const liveEvents = [];
   let demoEvents = [];
   let demoMode = false;
+  let currentDemoPatient = null;
+  let currentAccountName = "Admin";
+  let adminAuthenticated = false;
+  let adminSession = null;
   let events = liveEvents;
   let chart;
 
@@ -1001,6 +1170,22 @@
   const DEMO_INTERVAL_MS = 2500;
   const DEMO_HISTORY_LIMIT = 60;
   const DEMO_BASELINE = DEMO_SAMPLE.segments[DEMO_SAMPLE.segments.length - 1].personalBaseline;
+  const DEMO_PATIENTS = {
+    hamantha: {
+      id: "demo-healthy",
+      name: "Healthy Hamantha",
+      scenario: "healthy",
+      state: "normal",
+      baseline: DEMO_BASELINE
+    },
+    sam: {
+      id: "demo-sickly-sam",
+      name: "Sickly Sam",
+      scenario: "high-risk",
+      state: "elevated_hr",
+      baseline: { heartRate: 78, hrv: 58, spo2: null }
+    }
+  };
   const DEMO_VARIATIONS = [
     { hr: 0.2, hrv: 0.3 }, { hr: 0.7, hrv: 1.9 }, { hr: 1.2, hrv: 3.3 }, { hr: 1.4, hrv: 4.7 },
     { hr: 0.5, hrv: 2.6 }, { hr: -0.4, hrv: -1.1 }, { hr: -1.0, hrv: -3.2 }, { hr: -1.5, hrv: -4.5 },
@@ -1113,49 +1298,45 @@
   }
 
   function createSimulatedEvent(timestamp, sequence) {
+    const patient = currentDemoPatient || DEMO_PATIENTS.hamantha;
     const variation = DEMO_VARIATIONS[sequence % DEMO_VARIATIONS.length];
-    const currentHr = DEMO_BASELINE.heartRate + variation.hr;
-    const currentHrv = DEMO_BASELINE.hrv + variation.hrv;
+    const highRisk = patient.scenario === "high-risk";
+    const progression = Math.min(sequence, 100);
+    const variationScale = highRisk ? .18 : .35;
+    const currentHr = highRisk
+      ? patient.baseline.heartRate + 14 + progression * .1 + variation.hr * variationScale
+      : patient.baseline.heartRate + variation.hr * variationScale;
+    const currentHrv = highRisk
+      ? patient.baseline.hrv - 10 - progression * .13 + variation.hrv * variationScale
+      : patient.baseline.hrv + variation.hrv * variationScale;
+    // The high-risk scenario trend is illustrative demo data, not a clinical risk model.
+    const risk = highRisk ? Math.min(.95, .72 + progression * .0025) : 0;
     return {
-      event_id: "local-demo-reading-" + (sequence + 1),
-      patient_id: "sample",
-      state: "normal",
-      risk: 0.0,
+      event_id: "local-demo-" + (currentDemoPatient ? patient.id : "sample") + "-reading-" + (sequence + 1),
+      patient_id: currentDemoPatient ? patient.id : "sample",
+      state: patient.state,
+      risk,
       hr: Math.round(currentHr),
       timestamp,
-      personalBaseline: DEMO_BASELINE,
+      personalBaseline: patient.baseline,
       trendAnalysis: {
         status: "success",
         measurements: {
-          heartRate: trendComparison(currentHr, DEMO_BASELINE.heartRate),
-          hrv: trendComparison(currentHrv, DEMO_BASELINE.hrv)
+          heartRate: trendComparison(currentHr, patient.baseline.heartRate),
+          hrv: trendComparison(currentHrv, patient.baseline.hrv)
         }
       },
-      simulated: true
+      simulated: true,
+      demoPatient: currentDemoPatient ? patient.name : "Processed sample"
     };
   }
 
   function createDemoEvents() {
     const now = Date.now();
-    const sampleStart = now - DEMO_SAMPLE.segments.length * DEMO_SAMPLE.segmentSeconds * 1000;
-    const sampleEvents = DEMO_SAMPLE.segments.map((segment, index) => ({
-      event_id: "local-demo-sample-" + (index + 1),
-      patient_id: "sample",
-      state: "normal",
-      risk: 0.0,
-      hr: segment.hr,
-      timestamp: new Date(sampleStart + segment.endSec * 1000).toISOString(),
-      personalBaseline: segment.personalBaseline,
-      trendAnalysis: segment.trendAnalysis,
-      sample: { startSec: segment.startSec, endSec: segment.endSec, hrv: segment.hrv, source: DEMO_SAMPLE.source }
-    }));
-    const historyCount = DEMO_HISTORY_LIMIT - sampleEvents.length;
-    const historyStart = sampleStart - historyCount * DEMO_INTERVAL_MS;
-    const historyEvents = Array.from({ length: historyCount }, (_, index) =>
-      createSimulatedEvent(new Date(historyStart + index * DEMO_INTERVAL_MS).toISOString(), index)
+    demoReadingSequence = DEMO_HISTORY_LIMIT;
+    return Array.from({ length: DEMO_HISTORY_LIMIT }, (_, index) =>
+      createSimulatedEvent(new Date(now - (DEMO_HISTORY_LIMIT - index - 1) * DEMO_INTERVAL_MS).toISOString(), index)
     );
-    demoReadingSequence = historyCount;
-    return historyEvents.concat(sampleEvents);
   }
 
   function stopDemoStream() {
@@ -1178,25 +1359,185 @@
     }, DEMO_INTERVAL_MS);
   }
 
-  function setDemoMode(active) {
-    if (demoMode === active) return;
+  function setDemoMode(active, reset = false) {
+    if (demoMode === active && !reset) return;
     stopDemoStream();
     demoMode = active;
     demoEvents = demoMode ? createDemoEvents() : [];
-    events = demoMode ? demoEvents : liveEvents;
+    events = demoMode ? demoEvents : currentDemoPatient ? [] : liveEvents;
     const toggle = document.getElementById("demoToggle");
     toggle.setAttribute("aria-pressed", String(demoMode));
     toggle.setAttribute("aria-label", demoMode ? "Turn off Demo Mode and return to real data" : "Turn on Demo Mode (sample data)");
     toggle.title = demoMode ? "Exit Demo Mode" : "Demo Mode";
     document.body.dataset.demo = demoMode ? "on" : "off";
     document.getElementById("demoBanner").hidden = !demoMode;
-    document.title = demoMode ? "Moni-Buddy Dashboard (Sample data)" : "Moni-Buddy Dashboard";
+    setText("demoModeDescription", currentDemoPatient
+      ? currentDemoPatient.name + " is a fictional demo patient. Readings stay in this browser only; the watch is not connected."
+      : "Processed sample scenario. Readings stay in this browser only and are never sent to FastAPI or Supabase.");
+    document.title = demoMode
+      ? "Moni-Buddy Dashboard (Demo · " + (currentDemoPatient ? currentDemoPatient.name : "Processed sample") + ")"
+      : currentDemoPatient ? "Moni-Buddy Dashboard (Demo paused)" : "Moni-Buddy Dashboard";
     document.getElementById("ackNote").hidden = true;
     // A score from one view must never be shown in the other.
     Health.set(null, { immediate: true });
-    if (!demoMode) checkBackend();
+    if (!demoMode && !currentDemoPatient) checkBackend();
     render();
     if (demoMode) startDemoStream();
+  }
+
+  function selectDemoPatient(patientKey) {
+    const patient = DEMO_PATIENTS[patientKey];
+    if (!patient) return;
+    currentDemoPatient = patient;
+    currentAccountName = patient.name;
+    setText("patientId", patient.name);
+    document.getElementById("patientKind").hidden = false;
+    document.getElementById("demoLogin").hidden = true;
+    document.getElementById("dashboardShell").inert = false;
+    setLoginMode(false);
+    updateAccountMenu();
+    closeAccountMenu();
+    setDemoMode(true, true);
+    document.getElementById("accountMenuToggle").focus();
+  }
+
+  function setLoginMode(demoEnabled) {
+    const toggle = document.getElementById("loginDemoToggle");
+    toggle.setAttribute("aria-pressed", String(demoEnabled));
+    toggle.setAttribute("aria-label", demoEnabled ? "Turn off Demo Mode and hide demo patient profiles" : "Turn on Demo Mode to choose a demo patient");
+    document.getElementById("adminLoginForm").hidden = demoEnabled;
+    document.getElementById("loginProfiles").hidden = !demoEnabled;
+    document.getElementById("loginError").hidden = true;
+  }
+
+  function updateAccountMenu() {
+    setText("accountToggleName", currentAccountName);
+    setText("accountMenuName", currentAccountName);
+    const returnAdmin = document.getElementById("returnAdminButton");
+    returnAdmin.hidden = !currentDemoPatient;
+    returnAdmin.textContent = adminAuthenticated ? "Return to admin" : "Admin login";
+  }
+
+  function closeAccountMenu() {
+    document.getElementById("accountMenu").hidden = true;
+    document.getElementById("accountMenuToggle").setAttribute("aria-expanded", "false");
+  }
+
+  function openLoginScreen() {
+    stopDemoStream();
+    if (demoMode) {
+      setDemoMode(false);
+    } else {
+      demoEvents = [];
+      Health.set(null, { immediate: true });
+    }
+    currentDemoPatient = null;
+    demoEvents = [];
+    events = liveEvents;
+    currentAccountName = "Admin";
+    setText("patientId", "Admin");
+    document.getElementById("patientKind").hidden = true;
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("dashboardShell").inert = true;
+    document.getElementById("demoLogin").hidden = false;
+    document.title = "Moni-Buddy Dashboard · Log In";
+    setLoginMode(false);
+    updateAccountMenu();
+    closeAccountMenu();
+    document.getElementById("loginUsername").focus();
+  }
+
+  function showDashboardAccount(name, isAdmin) {
+    currentDemoPatient = null;
+    currentAccountName = name;
+    document.getElementById("patientKind").hidden = true;
+    setText("patientId", isAdmin ? "p1" : name);
+    document.getElementById("demoLogin").hidden = true;
+    document.getElementById("dashboardShell").inert = false;
+    if (demoMode) {
+      setDemoMode(false);
+    } else {
+      demoEvents = [];
+      events = liveEvents;
+      Health.set(null, { immediate: true });
+      render();
+    }
+    document.title = "Moni-Buddy Dashboard";
+    updateAccountMenu();
+    if (isAdmin) checkBackend();
+  }
+
+  async function handleAdminLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const button = document.getElementById("loginSubmit");
+    const error = document.getElementById("loginError");
+    button.disabled = true;
+    error.hidden = true;
+    try {
+      const response = await fetch(API_BASE + "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || "Unable to log in.");
+      if (!result.access_token || !result.refresh_token) throw new Error("Authentication response did not include a session.");
+      adminSession = { accessToken: result.access_token, refreshToken: result.refresh_token };
+      adminAuthenticated = true;
+      document.getElementById("loginPassword").value = "";
+      showDashboardAccount("Admin", true);
+    } catch (loginError) {
+      error.textContent = loginError.message || "Unable to reach Supabase Auth.";
+      error.hidden = false;
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function logoutAccount() {
+    const session = adminSession;
+    adminSession = null;
+    adminAuthenticated = false;
+    let logoutMessage = "";
+    if (session) {
+      try {
+        const response = await fetch(API_BASE + "/auth/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ access_token: session.accessToken })
+        });
+        if (!response.ok) logoutMessage = "The local dashboard session was cleared, but Supabase sign-out could not be confirmed.";
+      } catch {
+        logoutMessage = "The local dashboard session was cleared, but Supabase sign-out could not be confirmed.";
+      }
+    }
+    openLoginScreen();
+    if (logoutMessage) {
+      const error = document.getElementById("loginError");
+      error.textContent = logoutMessage;
+      error.hidden = false;
+    }
+  }
+
+  function openAdminAccount() {
+    if (adminAuthenticated) {
+      showDashboardAccount("Admin", true);
+      return;
+    }
+    openLoginScreen();
+  }
+
+  function handleAccountAction(action) {
+    closeAccountMenu();
+    if (action === "hamantha" || action === "sam") {
+      selectDemoPatient(action);
+    } else if (action === "admin") {
+      openAdminAccount();
+    } else if (action === "logout") {
+      logoutAccount();
+    }
   }
 
   function renderHeartRateLine(animate = false) {
@@ -1295,12 +1636,17 @@
   }
 
   function renderAlert() {
-    const pending = events.filter(event => Number(event.risk) >= .7 && !event.acknowledged_at).pop();
     const banner = document.getElementById("alert");
+    if (demoMode) {
+      banner.hidden = true;
+      return;
+    }
+    const pending = events.filter(event => Number(event.risk) >= .7 && !event.acknowledged_at).pop();
     if (!pending) {
       banner.hidden = true;
       return;
     }
+    setText("alertHeading", "Alert needs your attention");
     setText("alertText", stateName(pending.state) + " at " + eventTime(pending) + " (" + pending.hr + " bpm).");
     banner.dataset.id = pending.event_id;
     banner.hidden = false;
@@ -1427,6 +1773,9 @@
     if (demoMode) {
       text = "Watch not connected";
       detail = "Sample data only";
+    } else if (currentDemoPatient) {
+      text = "Demo Mode paused";
+      detail = "No simulated readings";
     } else if (latest) {
       state = "online";
       text = "Edge online";
@@ -1494,8 +1843,13 @@
       const beat = Number(latest.hr) > 0 ? Math.min(1.6, Math.max(.45, 60 / Number(latest.hr))) : 2.2;
       document.querySelector(".watch3d-heart").style.setProperty("--beat", beat.toFixed(2) + "s");
       renderConnection(latest);
-      setText("insight", INSIGHTS[latest.state] || "");
-      setText("insightState", INSIGHTS[latest.state] ? state + (demoMode ? " sample" : " event") : "No current insight");
+      const insight = demoMode && currentDemoPatient
+        ? currentDemoPatient.scenario === "high-risk"
+          ? "Fictional demo scenario: simulated heart rate rises while HRV trends below this profile's reference baseline. This is not a diagnosis."
+          : "Fictional demo scenario: simulated heart rate, HRV, and risk remain close to the sample-derived reference baseline."
+        : INSIGHTS[latest.state] || "";
+      setText("insight", insight);
+      setText("insightState", insight ? state + (demoMode ? " demo scenario" : " event") : "No current insight");
       renderOptionalDetails(latest);
       renderAlert();
     }
@@ -1578,6 +1932,38 @@
     document.getElementById("demoToggle").addEventListener("click", () => setDemoMode(!demoMode));
   }
 
+  function bindPatientAuth() {
+    const loginDemoToggle = document.getElementById("loginDemoToggle");
+    loginDemoToggle.addEventListener("click", () => {
+      setLoginMode(loginDemoToggle.getAttribute("aria-pressed") !== "true");
+    });
+    document.querySelectorAll(".login-profile").forEach(button => {
+      button.addEventListener("click", () => selectDemoPatient(button.dataset.demoPatient));
+    });
+    document.getElementById("adminLoginForm").addEventListener("submit", handleAdminLogin);
+    const accountControl = document.getElementById("accountControl");
+    const accountToggle = document.getElementById("accountMenuToggle");
+    const accountMenu = document.getElementById("accountMenu");
+    accountToggle.addEventListener("click", () => {
+      const open = accountMenu.hidden;
+      accountMenu.hidden = !open;
+      accountToggle.setAttribute("aria-expanded", String(open));
+    });
+    document.querySelectorAll("[data-account-action]").forEach(button => {
+      button.addEventListener("click", () => handleAccountAction(button.dataset.accountAction));
+    });
+    document.addEventListener("click", event => {
+      if (!accountControl.contains(event.target)) closeAccountMenu();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !accountMenu.hidden) {
+        closeAccountMenu();
+        accountToggle.focus();
+      }
+    });
+    updateAccountMenu();
+  }
+
   // ---- Overall Health floral percentage tracker ---------------------------------------------
   // The Python code does not calculate an overall health percentage (signalQuality is only 0 or 1 and risk comes
   // from the event). So nothing here invents one: with no value the wreath stays in its unfilled state and the
@@ -1636,7 +2022,7 @@
   // no-cors resolves whenever the server answers, even though the backend does not send CORS headers.
   // This only tells us FastAPI is up; it says nothing about the watch or the edge board.
   async function checkBackend() {
-    if (demoMode) return;
+    if (demoMode || currentDemoPatient) return;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4000);
     try {
@@ -1662,7 +2048,7 @@
       if (existing >= 0) liveEvents[existing] = { ...liveEvents[existing], ...item };
       else { liveEvents.push({ ...item }); added += 1; }
     });
-    if (!demoMode) render();
+    if (!demoMode && !currentDemoPatient) render();
     return added;
   }
 
@@ -1719,12 +2105,14 @@
 
   bindNavigation();
   bindAcknowledgement();
+  bindPatientAuth();
   bindDemoToggle();
   bindFloralInteraction();
   Health.set(null, { immediate: true });
   render();
   checkBackend();
   setInterval(checkBackend, 15000);
+  document.getElementById("loginUsername").focus();
 </script>
 </body>
 </html>
