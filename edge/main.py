@@ -1,8 +1,9 @@
-import sys
+﻿import sys
 from datetime import datetime
 from uuid import uuid4
 
 import httpx
+import numpy as np
 
 from edge.models.healthState import HealthState
 from edge.twin import DigitalTwin
@@ -10,6 +11,18 @@ from edge.signalProcessing import processSignals
 from edge.trendAnalysis import TrendAnalyzer
 
 API_URL = "http://127.0.0.1:8000/events"
+
+
+def to_json_compatible(value):
+    if isinstance(value, dict):
+        return {key: to_json_compatible(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [to_json_compatible(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return to_json_compatible(value.tolist())
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
 
 
 def classify(hr):
@@ -30,7 +43,10 @@ results = processSignals("edge/data/sampleData.csv")
 print("Moni-Buddy")
 print("----------------------")
 
+# Check signal quality before updating the twin
 if results["status"] == "success":
+
+    # Create a health state using processed measurements
     healthState = HealthState(
         heartRate=results["heartRate"],
         hrv=results["hrv"],
@@ -39,7 +55,9 @@ if results["status"] == "success":
         timestamp=datetime.now(),
     )
 
+    # Update the digital twin
     twin.update(healthState)
+    personalBaseline = twin.getPersonalBaseline()
 
     print("\nProcessed Measurements:")
     print("Heart Rate:", healthState.heartRate, "BPM")
@@ -48,10 +66,11 @@ if results["status"] == "success":
     print("Signal Quality:", healthState.signalQuality)
 
     print("\nPersonal Baseline:")
-    print(twin.getPersonalBaseline())
+    print(personalBaseline)
 
+    # Analyze trends against the personal baseline
     analyzer = TrendAnalyzer()
-    trendResults = analyzer.analyze(healthState, twin.getPersonalBaseline())
+    trendResults = analyzer.analyze(healthState, personalBaseline)
 
     print("\nTrend Analysis:")
     print(trendResults)
@@ -71,12 +90,16 @@ if results["status"] == "success":
         "risk": round(risk, 2),
         "hr": hr,
         "timestamp": datetime.now().astimezone().isoformat(),
+        "personalBaseline": to_json_compatible(personalBaseline),
+        "trendAnalysis": to_json_compatible(trendResults),
     }
 
+    # Send event to FastAPI
     response = httpx.post(API_URL, json=eventData, timeout=10)
 
     print("\nBackend Response:")
     print(response.status_code)
     print(response.json())
+
 else:
     print("Poor signal quality. Digital twin was not updated.")

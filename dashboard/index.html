@@ -7,136 +7,832 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #eef3f4;
-    --panel: #ffffff;
-    --ink: #14282e;
-    --muted: #5d7279;
-    --line: #d5e0e3;
-    --teal: #0f6b73;
-    --ok: #2f8f5b;
-    --warn: #c98a12;
-    --alert: #c7382d;
-    --alert-bg: #fdecea;
+    --page: #f2f0f7;
+    --white: #fff;
+    --muted: rgba(255,255,255,.72);
+    --faint: rgba(255,255,255,.54);
+    --glass: rgba(255,255,255,.13);
+    --glass-hover: rgba(255,255,255,.2);
+    --glass-border: rgba(255,255,255,.25);
+    --lavender: #d7cdf8;
+    --pink: #f0c3d3;
+    --violet: #c3b4ec;
+    --alert-ink: #75475b;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
+    min-width: 320px;
+    min-height: 100vh;
     margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-    line-height: 1.5;
+    padding: 28px;
+    display: grid;
+    place-items: center;
+    color: var(--white);
+    background:
+      radial-gradient(ellipse at 12% 18%, rgba(216,207,240,.54), transparent 38%),
+      radial-gradient(ellipse at 90% 82%, rgba(244,208,221,.45), transparent 34%),
+      var(--page);
+    font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.45;
   }
-  header {
-    background: var(--teal);
-    color: #fff;
-    padding: 14px 20px;
+  a { color: inherit; }
+  button { font: inherit; }
+  [hidden] { display: none !important; }
+  .dashboard-shell {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 74px minmax(0,1fr);
+    width: min(1500px,100%);
+    min-height: calc(100vh - 56px);
+    overflow: clip;
+    border: 1px solid rgba(255,255,255,.54);
+    border-radius: 30px;
+    background:
+      radial-gradient(ellipse at 8% 105%, rgba(246,184,203,.8), transparent 44%),
+      radial-gradient(ellipse at 96% 5%, rgba(235,197,216,.7), transparent 42%),
+      linear-gradient(125deg,#9299c0 0%,#a6a4c9 37%,#b8accd 65%,#d2afc3 100%);
+    box-shadow: 0 30px 80px rgba(67,59,104,.2), 0 5px 16px rgba(67,59,104,.08);
+  }
+  .dashboard-shell::before, .dashboard-shell::after {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    content: "";
+    border-radius: 50%;
+  }
+  .dashboard-shell::before {
+    top: 16%;
+    left: 18%;
+    width: 430px;
+    height: 430px;
+    background: radial-gradient(circle,rgba(218,212,247,.19),transparent 70%);
+  }
+  .dashboard-shell::after {
+    right: -120px;
+    bottom: -180px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle,rgba(249,207,218,.24),transparent 68%);
+  }
+  .sidebar {
+    z-index: 1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
-  }
-  header h1 { margin: 0; font-size: 1.25rem; }
-  header .who { opacity: .85; font-size: .95rem; }
-  .status { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: #7ee2a8; }
-  main { max-width: 980px; margin: 0 auto; padding: 18px; display: grid; gap: 16px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
-  h2 { margin: 0 0 12px; font-size: 1.05rem; }
-
-  #alert {
-    display: none;
-    background: var(--alert-bg);
-    border: 2px solid var(--alert);
-    border-radius: 10px;
-    padding: 16px 18px;
     gap: 14px;
+    padding: 18px 9px 15px;
+    border-right: 1px solid rgba(255,255,255,.2);
+    background: rgba(255,255,255,.075);
+  }
+  .brand-mark {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: #fff;
+    text-decoration: none;
+  }
+  .brand-mark svg { width: 25px; height: 25px; }
+  .sidebar-controls { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .sidebar .demo-toggle { width: 40px; height: 40px; margin-top: 0; }
+  .sidebar .demo-toggle svg { width: 24px; height: 24px; }
+  .sidebar-status {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 50%;
+    background: rgba(255,255,255,.1);
+  }
+  .sidebar-status .sync-dot { width: 8px; height: 8px; }
+  .workspace { min-width: 0; }
+  .topbar {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    min-height: 70px;
+    grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 10px 24px;
+    border-bottom: 1px solid rgba(255,255,255,.2);
+  }
+  .brand-context { display: flex; align-items: center; gap: 20px; min-width: 0; }
+  .brand-wordmark { display: inline-flex; align-items: center; gap: 7px; font-size: .95rem; font-weight: 600; letter-spacing: -.03em; text-decoration: none; white-space: nowrap; }
+  .brand-emblem { display: grid; width: 23px; height: 23px; place-items: center; }
+  .brand-emblem svg { width: 22px; height: 22px; }
+  .patient-greeting { display: grid; gap: 1px; min-width: 0; }
+  .greeting { color: var(--muted); font-size: .63rem; }
+  .patient-context { color: var(--muted); font-size: .7rem; white-space: nowrap; }
+  .patient-context strong { color: #fff; font-weight: 500; }
+  .top-nav { display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .top-tab {
+    padding: 8px 13px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: rgba(255,255,255,.74);
+    background: transparent;
+    font-size: .75rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .2s ease,color .2s ease;
+  }
+  .top-tab:hover, .top-tab:focus-visible, .top-tab.active {
+    border-color: rgba(255,255,255,.18);
+    color: #fff;
+    background: rgba(255,255,255,.15);
+    outline: none;
+  }
+  .connection {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: 100%;
+    padding: 7px 12px;
+    border: 1px solid rgba(255,255,255,.23);
+    border-radius: 999px;
+    background: rgba(255,255,255,.11);
+  }
+  .connection-copy { min-width: 0; }
+  .connection-copy span, .connection-copy small { display: block; }
+  .connection-copy span { font-size: .7rem; line-height: 1.2; white-space: nowrap; }
+  .connection-copy small { margin-top: 2px; color: var(--muted); font-size: .59rem; white-space: nowrap; }
+  .header-actions { display: flex; align-items: center; justify-self: end; gap: 8px; min-width: 0; }
+  .header-icon, .profile-avatar {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50%;
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.1);
+  }
+  .header-icon svg { width: 16px; height: 16px; }
+  .profile-avatar { color: #5d5877; background: linear-gradient(145deg,rgba(255,255,255,.92),rgba(239,219,232,.88)); }
+  .profile-avatar svg { width: 19px; height: 19px; }
+  .sync-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #d5d0e7;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.11);
+  }
+  .sync-dot[data-state="online"] { background: #c8f2df; }
+  .sync-dot[data-state="offline"] { background: #ffd9df; }
+  main { display: grid; gap: 14px; padding: 17px clamp(14px,2.1vw,29px) 25px; }
+  .glass-card {
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background: var(--glass);
+    box-shadow: 0 12px 28px rgba(71,61,105,.08),inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  #alert {
+    display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
+    gap: 14px;
+    padding: 11px 15px;
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: 15px;
+    color: var(--alert-ink);
+    background: linear-gradient(105deg,rgba(255,230,237,.94),rgba(255,245,249,.78));
+    box-shadow: 0 10px 24px rgba(109,65,92,.1);
   }
-  #alert.show { display: flex; }
-  #alert strong { color: var(--alert); font-size: 1.05rem; }
+  .alert-copy { display: flex; align-items: center; gap: 10px; }
+  .alert-mark {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,.68);
+  }
+  .alert-mark svg { width: 15px; height: 15px; }
+  .alert-copy strong { display: block; font-size: .85rem; font-weight: 600; }
+  .alert-copy span { display: block; margin-top: 1px; font-size: .72rem; opacity: .8; }
   button.ack {
-    background: var(--alert);
-    color: #fff;
-    border: 0;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 1rem;
+    flex: 0 0 auto;
+    padding: 7px 12px;
+    border: 1px solid rgba(255,255,255,.75);
+    border-radius: 999px;
+    color: #674656;
+    background: rgba(255,255,255,.8);
+    box-shadow: 0 3px 10px rgba(95,55,79,.09);
     cursor: pointer;
+    font-size: .72rem;
+    transition: transform .18s ease,background .18s ease;
   }
-  button.ack:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-  #ackNote { display: none; color: var(--ok); font-weight: 600; }
-  #ackNote.show { display: block; }
-
-  .state { display: flex; flex-wrap: wrap; gap: 28px; align-items: baseline; }
-  .state .label { color: var(--muted); font-size: .85rem; }
-  .big { font-size: 1.6rem; font-weight: 700; }
-  .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; color: #fff; font-weight: 600; font-size: .9rem; }
-  .low { background: var(--ok); } .mod { background: var(--warn); } .high { background: var(--alert); }
-  .insight { margin: 14px 0 0; padding: 12px 14px; background: var(--bg); border-left: 4px solid var(--teal); border-radius: 4px; }
-
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
-
-  ul.timeline { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; }
-  ul.timeline li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: center; }
-  ul.timeline .t { color: var(--muted); width: 74px; flex-shrink: 0; font-size: .9rem; }
-  ul.timeline .s { flex: 1; }
-  ul.timeline .r { font-size: .85rem; color: var(--muted); }
-  .chartbox { position: relative; height: 300px; }
+  button.ack:hover { background: #fff; transform: translateY(-1px); }
+  button.ack:focus-visible { outline: 2px solid #735b86; outline-offset: 3px; }
+  #ackNote {
+    padding: 9px 13px;
+    border-radius: 13px;
+    color: #fff;
+    font-size: .78rem;
+  }
+  .overview-layout {
+    display: grid;
+    grid-template-columns: minmax(0,1.02fr) minmax(0,.98fr);
+    gap: 13px;
+    min-width: 0;
+    scroll-margin-top: 16px;
+  }
+  .floral-panel {
+    display: grid;
+    min-height: 438px;
+    place-items: center;
+    padding: 9px;
+  }
+  .floral-stage {
+    position: relative;
+    width: min(100%,500px);
+    aspect-ratio: 1;
+    margin: auto;
+    touch-action: pan-y;
+  }
+  .floral-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  #wreathRings, #flowerParallax { transform-origin: center; transition: transform .25s ease-out; }
+  .wreath-image {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wreath-float 9s ease-in-out infinite;
+    will-change: transform;
+  }
+  .floral-stage.is-interacting .wreath-image { filter: drop-shadow(0 0 7px rgba(255,255,255,.32)); }
+  /* Unfilled part of the wreath: the same photo, faded, so the percentage reads as "filled vs. not yet". */
+  .wreath-track { opacity: .27; filter: grayscale(.6) saturate(.7) brightness(1.1); }
+  .floral-stage.is-interacting .wreath-track { filter: grayscale(.6) saturate(.7) brightness(1.1) drop-shadow(0 0 7px rgba(255,255,255,.32)); }
+  .flower-center {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    width: 43%;
+    aspect-ratio: 1;
+    align-content: center;
+    justify-items: center;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,.42);
+    border-radius: 50%;
+    color: #fff;
+    text-align: center;
+    background:
+      radial-gradient(circle at 35% 20%,rgba(255,255,255,.25),transparent 58%),
+      linear-gradient(145deg,rgba(205,198,231,.78),rgba(159,157,196,.7));
+    box-shadow: 0 12px 35px rgba(69,61,109,.18),inset 0 1px 12px rgba(255,255,255,.24);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translate(-50%,-50%);
+  }
+  .flower-center h2 { margin: 0; font-size: clamp(.85rem,1.4vw,1.15rem); font-weight: 400; letter-spacing: -.025em; }
+  .flower-center p { margin: 5px 0 0; color: rgba(255,255,255,.82); font-size: clamp(.58rem,.85vw,.72rem); }
+  .health-percent { margin-top: 3px; font-size: clamp(1.7rem,3.6vw,2.6rem); font-weight: 300; line-height: 1; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+  .health-percent small { margin-left: 1px; color: rgba(255,255,255,.75); font-size: .5em; letter-spacing: 0; }
+  .health-note { max-width: 92%; margin: 4px 0 0; color: rgba(255,255,255,.72); font-size: .52rem; line-height: 1.2; }
+  .demo-toggle {
+    position: relative;
+    display: grid;
+    width: 25px;
+    height: 25px;
+    margin-top: 7px;
+    padding: 2px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: rgba(255,255,255,.8);
+    background: transparent;
+    cursor: pointer;
+    transition: color .2s ease,filter .2s ease,transform .2s ease;
+  }
+  .demo-toggle svg { width: 21px; height: 21px; overflow: visible; }
+  .demo-toggle .demo-flower-center { fill: #fff4cb; transition: fill .2s ease; }
+  .demo-toggle:hover { color: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,.55)); transform: translateY(-1px); }
+  .demo-toggle[aria-pressed="true"] { color: #fff2d6; filter: drop-shadow(0 0 7px rgba(255,220,174,.8)); }
+  .demo-toggle[aria-pressed="true"] .demo-flower-center { fill: #f1b3d2; }
+  .demo-toggle:focus-visible { outline: 2px solid rgba(255,255,255,.9); outline-offset: 3px; }
+  .demo-toggle::after {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,.26);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(89,80,119,.86);
+    box-shadow: 0 4px 12px rgba(43,38,67,.16);
+    content: "Demo Mode";
+    font-size: .62rem;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%,3px);
+    transition: opacity .16s ease,transform .16s ease;
+    white-space: nowrap;
+  }
+  .demo-toggle:hover::after, .demo-toggle:focus-visible::after { opacity: 1; transform: translate(-50%,0); }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-rows: repeat(2,minmax(0,1fr));
+    gap: 11px;
+    min-width: 0;
+  }
+  .metric-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 208px;
+    flex-direction: column;
+    padding: 15px 16px;
+    scroll-margin-top: 24px;
+    transition: background .2s ease,transform .2s ease;
+  }
+  .metric-card:hover { background: var(--glass-hover); transform: translateY(-2px); }
+  .metric-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+  .metric-head h2 { margin: 0; font-size: .76rem; font-weight: 500; }
+  .metric-icon {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50%;
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.1);
+  }
+  .metric-icon svg { width: 14px; height: 14px; }
+  .metric-value { margin-top: 7px; font-size: clamp(1.7rem,2.7vw,2.2rem); font-weight: 300; line-height: 1.05; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+  .metric-value small { margin-left: 4px; color: var(--muted); font-size: .68rem; letter-spacing: 0; }
+  .metric-note { margin-top: auto; color: var(--muted); font-size: .67rem; }
+  .metric-empty { margin-top: auto; color: var(--muted); font-size: .67rem; }
+  .heart-sparkline { display: block; width: 100%; height: 43px; margin: auto 0 4px; overflow: visible; }
+  .heart-sparkline path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .heart-sparkline path.is-updating { animation: sparkline-refresh .55s ease-out; }
+  .heart-sparkline circle { fill: #fff; filter: drop-shadow(0 0 3px rgba(255,255,255,.7)); }
+  .hr-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; margin-top: 8px; }
+  .hr-stat { min-width: 0; }
+  .hr-stat span { display: block; color: var(--muted); font-size: .57rem; }
+  .hr-stat strong { display: block; margin-top: 1px; font-size: .7rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .status-word { margin-top: 17px; font-size: 1.15rem; font-weight: 400; }
+  .status-detail { margin-top: 4px; color: var(--muted); font-size: .7rem; }
+  .sleep-demo { display: grid; gap: 7px; margin-top: 8px; }
+  .sleep-values { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px 8px; }
+  .sleep-value span { display: block; color: var(--muted); font-size: .56rem; }
+  .sleep-value strong { display: block; margin-top: 1px; font-size: .69rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .sleep-timeline { display: grid; gap: 3px; }
+  .sleep-track { height: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.12); }
+  .sleep-window { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,rgba(219,214,255,.9),rgba(246,205,225,.9)); box-shadow: 0 0 10px rgba(255,255,255,.26); }
+  .sleep-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: .52rem; }
+  .sleep-caveat { margin: 0; color: rgba(255,255,255,.72); font-size: .52rem; line-height: 1.2; }
+  .watch-card { display: flex; flex-direction: column; }
+  .watch-card-content { display: grid; flex: 1; justify-items: center; align-content: center; gap: 8px; margin-top: 2px; }
+  .watch-mini { position: relative; width: 101px; height: 147px; overflow: hidden; }
+  .watch-device { position: absolute; top: 1px; left: 3px; width: 186px; height: 270px; transform: scale(.51); transform-origin: top left; }
+  .watch-band { position: absolute; left: 53px; width: 80px; height: 91px; border: 1px solid rgba(255,255,255,.34); background: linear-gradient(90deg,#b5a9d8,#e1d7f0 48%,#b4a8d7); }
+  .watch-band.top { top: 0; border-radius: 26px 26px 9px 9px; }
+  .watch-band.bottom { bottom: 0; border-radius: 9px 9px 26px 26px; }
+  .watch-band::after { position: absolute; top: 21px; left: 36px; width: 6px; height: 6px; border-radius: 50%; background: rgba(105,91,145,.48); box-shadow: 0 17px 0 rgba(105,91,145,.48),0 34px 0 rgba(105,91,145,.48); content: ""; }
+  .watch-case { position: absolute; inset: 36px 16px; z-index: 1; padding: 8px; border: 1px solid rgba(255,255,255,.8); border-radius: 42px; background: linear-gradient(145deg,#f8f2fb,#b9a9d3 45%,#f5e5ee 78%,#a89bc7); box-shadow: inset 0 0 0 2px rgba(255,255,255,.48),0 7px 16px rgba(66,52,94,.2); }
+  .watch-crown { position: absolute; top: 83px; right: 8px; width: 10px; height: 36px; border: 1px solid rgba(255,255,255,.45); border-radius: 5px 8px 8px 5px; background: linear-gradient(90deg,#a999c8,#eaddee); }
+  .watch-screen { position: relative; width: 100%; height: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 34px; color: #fff; background: radial-gradient(circle at 50% 20%,rgba(202,180,236,.36),transparent 48%),linear-gradient(160deg,#393752 0%,#4f4866 54%,#302d49 100%); box-shadow: inset 0 0 24px rgba(14,12,31,.23); }
+  .watch-screen::after { position: absolute; top: -34px; right: -50px; width: 130px; height: 190px; border-radius: 50%; background: linear-gradient(110deg,transparent,rgba(255,255,255,.08),transparent); content: ""; transform: rotate(28deg); pointer-events: none; }
+  .watch-heart { position: absolute; top: 26px; left: 50%; display: grid; width: 28px; height: 28px; place-items: center; color: #f2c4dc; transform: translateX(-50%); animation: heart-glow var(--beat,2.2s) ease-in-out infinite; }
+  .watch-heart svg { width: 19px; height: 19px; }
+  .watch-readout { position: absolute; top: 64px; right: 4px; left: 4px; text-align: center; }
+  .watch-label { color: rgba(255,255,255,.62); font-size: 7px; letter-spacing: .16em; }
+  .watch-number { margin-top: 3px; font-size: 39px; font-weight: 300; line-height: 1.1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+  .watch-number small { margin-left: 3px; color: rgba(255,255,255,.65); font-size: 9px; letter-spacing: .08em; }
+  .watch-state { margin-top: 5px; color: #e4d8ff; font-size: 9px; }
+  .watch-time { position: absolute; right: 4px; bottom: 17px; left: 4px; color: rgba(255,255,255,.58); font-size: 7px; letter-spacing: .08em; text-align: center; }
+  .watch-meta { display: grid; width: 100%; grid-template-columns: repeat(3,minmax(0,auto)); justify-content: space-between; gap: 6px 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.14); }
+  .watch-meta > div { min-width: 0; text-align: center; }
+  .watch-meta span { display: block; color: var(--muted); font-size: .58rem; }
+  .watch-meta strong { display: block; margin-top: 1px; font-size: .68rem; font-weight: 500; overflow-wrap: anywhere; }
+  .watch-meta .risk-pill { display: inline-block; margin-top: 2px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.13); font-size: .56rem; }
+  .insight-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px 24px; padding: 13px 18px; scroll-margin-top: 20px; }
+  .insight-card h2 { margin: 0; font-size: .76rem; font-weight: 500; }
+  .insight-card p { margin: 3px 0 0; color: rgba(255,255,255,.92); font-size: .89rem; }
+  .insight-state { color: var(--muted); font-size: .66rem; text-align: right; }
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 11px; }
+  .detail-card { min-width: 0; padding: 14px 16px; }
+  .detail-card h2 { margin: 0 0 10px; font-size: .76rem; font-weight: 500; }
+  .baseline-list { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+  .baseline-item span, .trend-row span { display: block; color: var(--muted); font-size: .65rem; }
+  .baseline-item strong { display: block; margin-top: 4px; font-size: .85rem; font-weight: 500; }
+  .trend-list { display: grid; gap: 7px; }
+  .trend-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; }
+  .trend-row strong { font-size: .75rem; font-weight: 500; text-align: right; }
+  .trend-row small { display: block; color: var(--faint); font-size: .6rem; }
+  .detail-empty { color: var(--muted); font-size: .7rem; }
+  .bottom-grid { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1.1fr); gap: 11px; scroll-margin-top: 20px; }
+  .bottom-card { min-width: 0; min-height: 226px; padding: 14px 17px; border-radius: 18px; }
+  .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .section-heading h2 { margin: 0; font-size: .77rem; font-weight: 500; }
+  .section-heading span { color: var(--muted); font-size: .63rem; }
+  ul.timeline { max-height: 165px; overflow-y: auto; list-style: none; margin: 0; padding: 0; scrollbar-color: rgba(255,255,255,.3) transparent; scrollbar-width: thin; }
+  ul.timeline li { display: grid; grid-template-columns: 63px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.13); }
+  .timeline-time { color: var(--muted); font-size: .63rem; font-variant-numeric: tabular-nums; }
+  .timeline-state { min-width: 0; font-size: .71rem; }
+  .timeline-ack { display: block; margin-top: 2px; color: var(--muted); font-size: .6rem; }
+  .timeline-risk { padding: 3px 7px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: .59rem; white-space: nowrap; }
+  .timeline-empty { display: block !important; padding: 27px 8px !important; color: var(--muted); font-size: .72rem; text-align: center; }
+  .chartbox { position: relative; height: 169px; }
+  .chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: .7rem; pointer-events: none; }
+  .empty-state { color: var(--muted); font-size: .69rem; }
+  #demoBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 14px;
+    border: 1px solid rgba(255,236,196,.62);
+    border-radius: 15px;
+    color: #fff;
+    background: linear-gradient(105deg,rgba(255,226,190,.3),rgba(255,214,228,.22));
+    box-shadow: 0 8px 22px rgba(86,62,104,.1);
+  }
+  #demoBanner strong { display: block; font-size: .76rem; font-weight: 600; letter-spacing: .06em; }
+  #demoBanner span { display: block; margin-top: 1px; color: rgba(255,255,255,.86); font-size: .68rem; }
+  .sample-chip {
+    display: none;
+    align-items: center;
+    margin-left: 7px;
+    padding: 1px 7px;
+    border: 1px solid rgba(255,236,196,.7);
+    border-radius: 999px;
+    color: #fff3d4;
+    background: rgba(255,226,170,.2);
+    font-size: .5rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  body[data-demo="on"] .sample-chip { display: inline-flex; }
+  .is-spotlit { box-shadow: 0 0 0 2px rgba(255,255,255,.7),0 0 30px rgba(255,255,255,.35),0 12px 28px rgba(71,61,105,.08) !important; }
+  .glass-card { transition: box-shadow .5s ease,background .2s ease,transform .2s ease; }
+  @keyframes heart-glow {
+    0%,100% { transform: translateX(-50%) scale(1); opacity: .85; }
+    48% { transform: translateX(-50%) scale(1.12); opacity: 1; }
+  }
+  @keyframes sparkline-refresh {
+    from { opacity: .5; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes wreath-float {
+    0%,100% { transform: translateY(var(--pointer-lift,0px)); }
+    50% { transform: translateY(calc(var(--pointer-lift,0px) - 1.5px)); }
+  }
+  @media (max-width: 1120px) {
+    body { padding: 16px; }
+    .dashboard-shell { min-height: calc(100vh - 32px); }
+    .overview-layout { grid-template-columns: minmax(0,1fr); }
+    .floral-panel { min-height: 0; }
+    .floral-stage { width: min(100%,440px); }
+    .metrics-grid { min-height: 410px; }
+  }
+  @media (min-width: 761px) and (max-width: 1020px) {
+    .topbar { grid-template-columns: minmax(0,1fr) auto; row-gap: 6px; }
+    .top-nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+  }
+  @media (max-width: 760px) {
+    body { display: block; padding: 0; }
+    .dashboard-shell { display: flex; min-height: 100vh; flex-direction: column; border-radius: 0; }
+    .workspace { order: 1; }
+    .sidebar { position: sticky; bottom: 0; z-index: 20; order: 2; flex-direction: row; justify-content: space-between; gap: 10px; padding: 8px 17px calc(8px + env(safe-area-inset-bottom,0px)); border-top: 1px solid rgba(255,255,255,.24); border-right: 0; background: rgba(150,148,196,.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .brand-mark { width: 34px; height: 34px; }
+    .sidebar-controls { flex-direction: row; gap: 8px; }
+    .sidebar-status { width: 33px; height: 33px; }
+    .sidebar .demo-toggle { width: 37px; height: 37px; }
+    .topbar { grid-template-columns: minmax(0,1fr) auto; gap: 8px; padding: 10px 13px 8px; }
+    .brand-context { gap: 9px; }
+    .header-actions { gap: 6px; }
+    .header-actions .connection { gap: 6px; padding: 5px 7px; }
+    .header-actions .connection-copy span { font-size: .57rem; }
+    .header-actions .connection-copy small { font-size: .51rem; }
+    .header-icon, .profile-avatar { width: 29px; height: 29px; }
+    .top-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 2px; width: 100%; }
+    .top-tab { flex: 1; padding: 7px 4px; font-size: .67rem; text-align: center; }
+    .connection { max-width: 155px; padding: 6px 8px; }
+    .connection-copy span { font-size: .63rem; }
+    .connection-copy small { font-size: .55rem; }
+    main { gap: 10px; padding: 12px 11px 15px; }
+    .overview-layout { gap: 10px; }
+    .floral-panel { padding: 3px; }
+    .floral-stage { width: min(100%,390px); }
+    .metrics-grid { min-height: 0; gap: 9px; }
+    .metric-card { min-height: 174px; padding: 12px; border-radius: 16px; }
+    .metric-value { font-size: 1.7rem; }
+    .metric-card { scroll-margin-bottom: 78px; }
+    .watch-meta { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; }
+    .watch-meta strong { font-size: .6rem; }
+    #demoBanner { flex-direction: column; align-items: flex-start; gap: 7px; }
+    .insight-card { grid-template-columns: 1fr; gap: 5px; padding: 12px 14px; }
+    .insight-state { text-align: left; }
+    .bottom-grid { grid-template-columns: 1fr; gap: 9px; }
+    .bottom-card { min-height: 210px; padding: 13px; }
+    .chartbox { height: 164px; }
+  }
+  @media (max-width: 380px) {
+    .patient-context { font-size: .62rem; }
+    .connection { max-width: 132px; }
+    .connection-copy span, .connection-copy small { overflow: hidden; text-overflow: ellipsis; }
+    .brand-context { flex: 0 0 auto; }
+    .brand-context { gap: 6px; }
+    .header-actions { gap: 4px; }
+    .header-actions .connection { gap: 4px; padding: 4px 5px; }
+    .header-actions .connection-copy span { font-size: .53rem; }
+    .header-actions .connection-copy small { font-size: .47rem; }
+    .header-icon, .profile-avatar { width: 26px; height: 26px; }
+    .header-icon svg { width: 14px; height: 14px; }
+    .profile-avatar svg { width: 17px; height: 17px; }
+    .metric-card { min-height: 160px; padding: 10px; }
+    .metric-head h2 { font-size: .7rem; }
+    .baseline-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 360px) {
+    .patient-greeting { display: none; }
+    .header-actions .header-icon { display: none; }
+    .topbar { grid-template-columns: auto minmax(0,1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after { scroll-behavior: auto !important; animation: none !important; transition-duration: .01ms !important; }
+  }
 </style>
 </head>
 <body>
-
-<header>
-  <div>
-    <h1>Moni-Buddy</h1>
-    <div class="who">Patient: <span id="patientName">Test Patient</span> (<span id="patientId">p1</span>)</div>
-  </div>
-  <div class="status"><span class="dot"></span><span id="syncText">Edge online</span></div>
-</header>
-
-<main>
-  <section id="alert" role="alert">
-    <div>
-      <strong>Alert needs your attention</strong>
-      <div id="alertText"></div>
+<div class="dashboard-shell">
+  <aside class="sidebar" aria-label="MoniBuddy dashboard controls">
+    <a class="brand-mark" href="#general" aria-label="Moni-Buddy General">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l2-5 3.4 9 2.2-5H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.4" opacity=".8"/></svg>
+    </a>
+    <div class="sidebar-controls">
+      <div class="sidebar-status" title="Edge status"><span class="sync-dot" data-state="idle" id="syncDot"></span></div>
+      <button class="demo-toggle" id="demoToggle" type="button" aria-label="Turn on Demo Mode (sample data)" aria-pressed="false" title="Demo Mode">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g fill="currentColor">
+            <ellipse cx="12" cy="5.1" rx="2.1" ry="3.1"/>
+            <ellipse cx="18" cy="9.4" rx="2.1" ry="3.1" transform="rotate(72 18 9.4)"/>
+            <ellipse cx="15.7" cy="16.5" rx="2.1" ry="3.1" transform="rotate(144 15.7 16.5)"/>
+            <ellipse cx="8.3" cy="16.5" rx="2.1" ry="3.1" transform="rotate(216 8.3 16.5)"/>
+            <ellipse cx="6" cy="9.4" rx="2.1" ry="3.1" transform="rotate(288 6 9.4)"/>
+          </g>
+          <circle class="demo-flower-center" cx="12" cy="12" r="2.2"/>
+        </svg>
+      </button>
     </div>
-    <button class="ack" id="ackBtn">Acknowledge alert</button>
-  </section>
-  <div id="ackNote" class="panel"></div>
+  </aside>
 
-  <section class="panel">
-    <h2>Current status</h2>
-    <div class="state">
-      <div><div class="label">State</div><div class="big" id="curState"></div></div>
-      <div><div class="label">Heart rate</div><div class="big"><span id="curHr"></span> bpm</div></div>
-      <div><div class="label">Risk level</div><span class="pill" id="curRisk"></span></div>
-      <div><div class="label">Last event</div><div id="curTime"></div></div>
-    </div>
-    <p class="insight" id="insight"></p>
-  </section>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="brand-context">
+        <a class="brand-wordmark" href="#general">
+          <span class="brand-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 13h3l2-5 3.4 9 2.2-5H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.4" opacity=".8"/></svg></span>
+          MoniBuddy
+        </a>
+        <div class="patient-greeting">
+          <span class="greeting">Hello</span>
+          <span class="patient-context">Patient <strong id="patientId">p1</strong></span>
+        </div>
+      </div>
+      <nav class="top-nav" aria-label="Dashboard views">
+        <a class="top-tab active" data-view="general" href="#general" aria-current="page">General</a>
+        <a class="top-tab" data-view="heart-rate" href="#heartRateCard">Heart Rate</a>
+        <a class="top-tab" data-view="sleep" href="#sleepCard">Sleep</a>
+        <a class="top-tab" data-view="recovery" href="#recoveryCard">Recovery</a>
+      </nav>
+      <div class="header-actions">
+        <div class="connection" aria-live="polite">
+          <span class="sync-dot" data-state="idle" aria-hidden="true"></span>
+          <div class="connection-copy"><span id="syncText">No event data</span><small id="lastSync">Last sync --</small></div>
+        </div>
+        <span class="header-icon" role="img" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <span class="profile-avatar" role="img" aria-label="Profile placeholder">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="currentColor" opacity=".72"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" fill="currentColor" opacity=".72"/></svg>
+        </span>
+      </div>
+    </header>
 
-  <div class="two">
-    <section class="panel">
-      <h2>Event timeline</h2>
-      <ul class="timeline" id="timeline"></ul>
-    </section>
-    <section class="panel">
-      <h2>Risk trend</h2>
-      <div class="chartbox"><canvas id="riskChart"></canvas></div>
-    </section>
+    <main>
+      <section id="demoBanner" role="status" hidden>
+        <div>
+          <strong>DEMO MODE · SIMULATED DATA</strong>
+          <span>Readings vary within a small range around the processed sample baseline. They stay in this browser only; nothing is sent, and the watch is not connected.</span>
+        </div>
+      </section>
+      <section id="alert" class="alert-banner" role="alert" aria-live="assertive" hidden>
+        <div class="alert-copy">
+          <span class="alert-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5m0 3h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><strong>Alert needs your attention</strong><span id="alertText"></span></div>
+        </div>
+        <button class="ack" id="ackBtn" type="button">Acknowledge</button>
+      </section>
+      <div id="ackNote" class="glass-card" role="status" hidden></div>
+
+      <section id="general" class="overview-layout" aria-label="General dashboard">
+        <article class="floral-panel glass-card">
+          <div class="floral-stage" id="floralStage">
+            <svg class="floral-svg" id="wreathSvg" viewBox="0 0 440 440" role="img" aria-label="Overall health wreath, awaiting data">
+              <defs>
+                <!-- Sweep mask: starts at 12 o'clock and runs clockwise. Three stacked arcs give the leading edge a soft feather. -->
+                <mask id="wreathSweep" maskUnits="userSpaceOnUse" x="-70" y="-70" width="580" height="580">
+                  <g transform="rotate(-90 220 220)" fill="none" stroke="#fff" stroke-width="270">
+                    <circle class="sweep-arc" cx="220" cy="220" r="135" pathLength="100" stroke-opacity=".22" stroke-dasharray="0 100"/>
+                    <circle class="sweep-arc" cx="220" cy="220" r="135" pathLength="100" stroke-opacity=".58" stroke-dasharray="0 100"/>
+                    <circle class="sweep-arc" cx="220" cy="220" r="135" pathLength="100" stroke-opacity="1" stroke-dasharray="0 100"/>
+                  </g>
+                </mask>
+              </defs>
+              <g id="wreathRings" fill="none" stroke="#fff" stroke-opacity=".38">
+                <circle cx="220" cy="220" r="207" stroke-width=".8"/>
+                <circle cx="220" cy="220" r="185" stroke-width=".7" stroke-opacity=".24"/>
+                <circle cx="220" cy="220" r="94" stroke-width=".7" stroke-opacity=".3"/>
+              </g>
+              <g id="flowerParallax">
+                <image class="wreath-image wreath-track" href="assets/monibuddy_floral_wreath_transparent.png" x="-49" y="-41" width="528" height="528" preserveAspectRatio="xMidYMid meet"/>
+                <g mask="url(#wreathSweep)">
+                  <image id="wreathImage" class="wreath-image" href="assets/monibuddy_floral_wreath_transparent.png" x="-49" y="-41" width="528" height="528" preserveAspectRatio="xMidYMid meet"/>
+                </g>
+              </g>
+            </svg>
+            <div class="flower-center">
+              <h2>Overall Health</h2>
+              <div class="health-percent" id="healthPercent" hidden><span id="healthPercentValue">0</span><small>%</small></div>
+              <p id="overallHealthState">Awaiting sufficient data</p>
+              <p class="health-note" id="healthNote" hidden>Demo only: 100 minus mean absolute HR/HRV baseline percent change, bounded 0–100. Not a medical assessment.</p>
+            </div>
+          </div>
+        </article>
+
+        <section class="metrics-grid" aria-label="Health and device metrics">
+          <article id="heartRateCard" class="metric-card glass-card">
+            <div class="metric-head">
+              <h2>Heart Rate<span class="sample-chip">SAMPLE DATA</span></h2>
+              <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-5 4 10 2.5-5H21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="metric-value"><span id="curHr">--</span><small>BPM</small></div>
+            <div class="hr-stats" id="hrStats" aria-label="Demo heart-rate summary" hidden>
+              <div class="hr-stat"><span>Average</span><strong><span id="hrAverage">--</span> BPM</strong></div>
+              <div class="hr-stat"><span>Minimum</span><strong><span id="hrMinimum">--</span> BPM</strong></div>
+              <div class="hr-stat"><span>Maximum</span><strong><span id="hrMaximum">--</span> BPM</strong></div>
+            </div>
+            <svg class="heart-sparkline" viewBox="0 0 180 43" aria-hidden="true"><path id="heartRateLine"></path><circle id="heartRatePoint" cx="0" cy="0" r="3" hidden/></svg>
+            <div class="metric-empty" id="heartRateEmpty">Awaiting heart-rate data</div>
+          </article>
+
+          <article id="sleepCard" class="metric-card glass-card">
+            <div class="metric-head">
+              <h2>Sleep<span class="sample-chip">DEMO ESTIMATE</span></h2>
+              <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19.5 15.5A8.5 8.5 0 0 1 8.5 4.5a8.6 8.6 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="status-word" id="sleepUnavailable">Unavailable</div>
+            <div class="metric-empty" id="sleepUnavailableNote">Sleep data is not collected</div>
+            <div class="sleep-demo" id="sleepDemo" hidden>
+              <div class="sleep-values">
+                <div class="sleep-value"><span>Bedtime</span><strong id="sleepBedtime">--</strong></div>
+                <div class="sleep-value"><span>Wake-up</span><strong id="sleepWakeTime">--</strong></div>
+                <div class="sleep-value"><span>Time in bed</span><strong id="sleepTimeInBed">--</strong></div>
+                <div class="sleep-value"><span>Estimated sleep</span><strong id="sleepDuration">--</strong></div>
+              </div>
+              <div class="sleep-timeline" role="img" aria-label="Simulated time-in-bed window; no sleep stages are measured">
+                <div class="sleep-track"><span class="sleep-window"></span></div>
+                <div class="sleep-axis"><span id="sleepStartLabel">--</span><span id="sleepEndLabel">--</span></div>
+              </div>
+              <p class="sleep-caveat">Illustrative demo estimate only. ECG/PPG alone does not confirm sleep duration.</p>
+            </div>
+          </article>
+
+          <article id="recoveryCard" class="metric-card glass-card">
+            <div class="metric-head">
+              <h2>Recovery</h2>
+              <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.2-8.8C1.1 7.8 3.2 4 6.8 4c2 0 3.8 1.2 5.2 3.1C13.4 5.2 15.2 4 17.2 4c3.6 0 5.7 3.8 4 7.2C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="status-word">Unavailable</div>
+            <div class="metric-empty">No recovery calculation available</div>
+          </article>
+
+          <article id="watchCard" class="metric-card watch-card glass-card">
+            <div class="metric-head">
+              <h2>Watch Status<span class="sample-chip">SAMPLE DATA</span></h2>
+              <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="6" width="14" height="12" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 3h8v3H8zm0 15h8v3H8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="watch-card-content">
+              <div class="watch-mini" aria-hidden="true">
+                <div class="watch-device">
+                  <div class="watch-band top"></div><div class="watch-band bottom"></div><div class="watch-crown"></div>
+                  <div class="watch-case">
+                    <div class="watch-screen">
+                      <div class="watch-heart"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.7c0 4.1-8.8 10-8.8 10s-8.8-5.9-8.8-10A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.6Z" fill="currentColor"/></svg></div>
+                      <div class="watch-readout">
+                        <div class="watch-label" id="watchFaceLabel">LATEST EVENT</div>
+                        <div class="watch-number"><span id="watchFaceHr">--</span><small>BPM</small></div>
+                        <div class="watch-state" id="watchFaceState">Awaiting events</div>
+                      </div>
+                      <div class="watch-time" id="watchTime">AWAITING EVENTS</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="watch-meta">
+                <div><span>State</span><strong id="curState">No event data</strong></div>
+                <div><span>Risk score</span><strong id="curRisk">--</strong><span class="risk-pill" id="riskLabel">No risk data</span></div>
+                <div><span>Last event</span><strong id="curTime">No events</strong></div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section id="insights" class="insight-card glass-card" aria-labelledby="insightHeading">
+        <div>
+          <h2 id="insightHeading">Insights<span class="sample-chip">SAMPLE DATA</span></h2>
+          <p id="insight">Insights will appear when event data is available.</p>
+        </div>
+        <span class="insight-state" id="insightState">No current insight</span>
+      </section>
+
+      <section id="detailGrid" class="detail-grid" aria-label="Personal baseline and trend details" hidden>
+        <article id="baselineCard" class="detail-card glass-card" hidden>
+          <h2>Personal baseline<span class="sample-chip">SAMPLE DATA</span></h2>
+          <div class="baseline-list">
+            <div class="baseline-item"><span>Heart rate</span><strong id="baselineHr">--</strong></div>
+            <div class="baseline-item"><span>HRV</span><strong id="baselineHrv">--</strong></div>
+            <div class="baseline-item"><span>SpO2</span><strong id="baselineSpo2">--</strong></div>
+          </div>
+        </article>
+        <article id="trendCard" class="detail-card glass-card" hidden>
+          <h2>Trend comparison<span class="sample-chip">SAMPLE DATA</span></h2>
+          <div class="trend-list" id="trendRows"></div>
+        </article>
+      </section>
+
+      <section id="history" class="bottom-grid" aria-label="Event history">
+        <article class="bottom-card glass-card">
+          <div class="section-heading"><h2>Event Timeline<span class="sample-chip">SAMPLE DATA</span></h2><span id="eventCount">0 events</span></div>
+          <ul class="timeline" id="timeline" aria-live="polite"></ul>
+        </article>
+        <article class="bottom-card glass-card">
+          <div class="section-heading"><h2>Risk Trend<span class="sample-chip">SAMPLE DATA</span></h2><span id="riskSummary">Event risk score</span></div>
+          <div class="chartbox">
+            <canvas id="riskChart" role="img" aria-label="Risk score over time"></canvas>
+            <div class="chart-empty" id="chartEmpty">No risk events to plot</div>
+          </div>
+        </article>
+      </section>
+    </main>
   </div>
-</main>
+</div>
 
 <script>
-  // ---- FAKE DATA: same fields as the Supabase "events" table. ----
-  // Later: replace this array with a fetch() call to the FastAPI backend.
-  const API_URL = "http://127.0.0.1:8000";
-  const PATIENT_ID = "p1";
-  let events = [];
+  // Two completely separate stores. Demo events live only in `demoEvents` (browser memory).
+  // Nothing in this file ever POSTs, upserts or writes events anywhere, so demo data cannot reach FastAPI or Supabase.
+  const liveEvents = [];
+  let demoEvents = [];
+  let demoMode = false;
+  let events = liveEvents;
+  let chart;
+
+  const API_BASE = (window.MONIBUDDY_API_BASE || "http://127.0.0.1:8000").replace(/\/$/, "");
+  let backendState = "unknown"; // unknown | online | offline (reachability of FastAPI only, not of the watch)
+
+  // SAMPLE DATA. Generated by running the unmodified Python edge code on edge/data/sampleData.csv:
+  // processSignals() on consecutive 10-second segments of the 60-second recording, each reading passed through
+  // DigitalTwin.update() / getPersonalBaseline() and TrendAnalyzer.analyze(), in order, so the baseline builds up
+  // the same way it would across real events. hr is round(heartRate) as edge/main.py does. The selected demo
+  // behaviour is state "normal" with risk 0.0 (edge/main.py's own normal band is 50-100 bpm; every segment is inside it).
+  const DEMO_SAMPLE = {"source":"edge/data/sampleData.csv","samplingRateHz":250,"segmentSeconds":10,"segments":[{"startSec":0,"endSec":10,"hr":75,"hrExact":74.88,"hrv":114.9,"signalQuality":1.0,"ecgPeaks":13,"personalBaseline":{"heartRate":74.88,"hrv":114.9,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":74.88,"baseline":74.88,"difference":0.0,"percentChange":0.0,"trend":"close_to_baseline"},"hrv":{"current":114.9,"baseline":114.9,"difference":0.0,"percentChange":0.0,"trend":"close_to_baseline"}}}},{"startSec":10,"endSec":20,"hr":73,"hrExact":72.82,"hrv":44.67,"signalQuality":1.0,"ecgPeaks":13,"personalBaseline":{"heartRate":73.85,"hrv":79.785,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":72.82,"baseline":73.85,"difference":-1.03,"percentChange":-1.39,"trend":"close_to_baseline"},"hrv":{"current":44.67,"baseline":79.78,"difference":-35.11,"percentChange":-44.01,"trend":"below_baseline"}}}},{"startSec":20,"endSec":30,"hr":74,"hrExact":73.96,"hrv":93.32,"signalQuality":1.0,"ecgPeaks":12,"personalBaseline":{"heartRate":73.88666666666666,"hrv":84.29666666666667,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":73.96,"baseline":73.89,"difference":0.07,"percentChange":0.1,"trend":"close_to_baseline"},"hrv":{"current":93.32,"baseline":84.3,"difference":9.02,"percentChange":10.7,"trend":"above_baseline"}}}},{"startSec":30,"endSec":40,"hr":74,"hrExact":74.16,"hrv":81.04,"signalQuality":1.0,"ecgPeaks":12,"personalBaseline":{"heartRate":73.95499999999998,"hrv":83.4825,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":74.16,"baseline":73.95,"difference":0.21,"percentChange":0.28,"trend":"close_to_baseline"},"hrv":{"current":81.04,"baseline":83.48,"difference":-2.44,"percentChange":-2.93,"trend":"close_to_baseline"}}}},{"startSec":40,"endSec":50,"hr":74,"hrExact":73.76,"hrv":80.01,"signalQuality":1.0,"ecgPeaks":12,"personalBaseline":{"heartRate":73.91599999999998,"hrv":82.788,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":73.76,"baseline":73.92,"difference":-0.16,"percentChange":-0.21,"trend":"close_to_baseline"},"hrv":{"current":80.01,"baseline":82.79,"difference":-2.78,"percentChange":-3.36,"trend":"close_to_baseline"}}}},{"startSec":50,"endSec":60,"hr":73,"hrExact":72.94,"hrv":70.61,"signalQuality":1.0,"ecgPeaks":12,"personalBaseline":{"heartRate":73.75333333333332,"hrv":80.75833333333334,"spo2":null},"trendAnalysis":{"status":"success","measurements":{"heartRate":{"current":72.94,"baseline":73.75,"difference":-0.81,"percentChange":-1.1,"trend":"close_to_baseline"},"hrv":{"current":70.61,"baseline":80.76,"difference":-10.15,"percentChange":-12.57,"trend":"below_baseline"}}}}]};
+
+  const DEMO_INTERVAL_MS = 2500;
+  const DEMO_HISTORY_LIMIT = 60;
+  const DEMO_BASELINE = DEMO_SAMPLE.segments[DEMO_SAMPLE.segments.length - 1].personalBaseline;
+  const DEMO_VARIATIONS = [
+    { hr: 0.2, hrv: 0.3 }, { hr: 0.7, hrv: 1.9 }, { hr: 1.2, hrv: 3.3 }, { hr: 1.4, hrv: 4.7 },
+    { hr: 0.5, hrv: 2.6 }, { hr: -0.4, hrv: -1.1 }, { hr: -1.0, hrv: -3.2 }, { hr: -1.5, hrv: -4.5 },
+    { hr: -0.7, hrv: -2.3 }, { hr: 0.3, hrv: 0.7 }, { hr: 1.0, hrv: 3.8 }, { hr: 1.6, hrv: 4.3 },
+    { hr: 0.8, hrv: 1.5 }, { hr: -0.2, hrv: -0.8 }, { hr: -1.2, hrv: -4.2 }, { hr: -1.6, hrv: -3.4 }
+  ];
+  const DEMO_SLEEP_SESSION = {
+    bedtime: "11:15 PM",
+    wakeTime: "7:00 AM",
+    timeInBedMinutes: 465,
+    estimatedSleepMinutes: 435
+  };
+  let demoStreamTimer = null;
+  let demoReadingSequence = 0;
 
   const STATE_NAMES = {
     normal: "Normal",
@@ -150,89 +846,691 @@
     low_hr: "Your heart rate was lower than usual. If you feel dizzy or faint, sit down and contact your doctor.",
     irregular_rhythm: "Your heartbeat looked uneven for a short time. Share this with your doctor at your next check-in."
   };
+  const METRIC_LABELS = { heartRate: "Heart rate", hrv: "HRV", spo2: "SpO2" };
+  const METRIC_UNITS = { heartRate: "BPM", hrv: "ms", spo2: "%" };
 
-  const fmtTime = iso => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  const riskLevel = r => r < 0.4 ? ["Low", "low"] : r < 0.7 ? ["Moderate", "mod"] : ["High", "high"];
+  const fmtTime = iso => {
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? "--" : date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
+  const fmtTimeSeconds = iso => {
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? "--" : date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  };
+  const fmtDateTime = iso => {
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  };
+  const fmtDateTimeSeconds = iso => {
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" });
+  };
+  const clock = seconds => Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  const formatDuration = minutes => Math.floor(minutes / 60) + "h " + String(minutes % 60).padStart(2, "0") + "m";
+  // Demo events show their position in the sample recording instead of a wall-clock time.
+  const eventTime = event => event.sample ? clock(event.sample.endSec) : event.simulated ? fmtTimeSeconds(event.timestamp) : fmtTime(event.timestamp);
+  const eventDateTime = event => event.sample ? "Sample " + clock(event.sample.startSec) + "\u2013" + clock(event.sample.endSec) : fmtDateTime(event.timestamp);
+  const stateName = state => STATE_NAMES[state] || state || "Unknown";
+  const riskLevel = risk => risk < .4 ? ["Low", "low"] : risk < .7 ? ["Moderate", "mod"] : ["High", "high"];
+  const formatMetric = (value, unit) => {
+    if (value === null) return "Unavailable";
+    if (value === undefined) return "--";
+    const number = Number(value);
+    if (!Number.isFinite(number)) return String(value);
+    return number.toFixed(Number.isInteger(number) ? 0 : 1) + (unit ? " " + unit : "");
+  };
 
-  let chart;
+  function setText(id, value) {
+    document.getElementById(id).textContent = value;
+  }
 
-  function render() {
-    events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const latest = events[events.length - 1];
+  function renderDemoSleep() {
+    const active = demoMode;
+    document.getElementById("sleepDemo").hidden = !active;
+    document.getElementById("sleepUnavailable").hidden = active;
+    document.getElementById("sleepUnavailableNote").hidden = active;
+    setText("sleepBedtime", active ? DEMO_SLEEP_SESSION.bedtime : "--");
+    setText("sleepWakeTime", active ? DEMO_SLEEP_SESSION.wakeTime : "--");
+    setText("sleepStartLabel", active ? DEMO_SLEEP_SESSION.bedtime : "--");
+    setText("sleepEndLabel", active ? DEMO_SLEEP_SESSION.wakeTime : "--");
+    setText("sleepTimeInBed", active ? formatDuration(DEMO_SLEEP_SESSION.timeInBedMinutes) : "--");
+    setText("sleepDuration", active ? formatDuration(DEMO_SLEEP_SESSION.estimatedSleepMinutes) : "--");
+  }
 
-    // Current status card
-    document.getElementById("curState").textContent = STATE_NAMES[latest.state] || latest.state;
-    document.getElementById("curHr").textContent = latest.hr;
-    document.getElementById("curTime").textContent = fmtTime(latest.timestamp);
-    const [lvlText, lvlClass] = riskLevel(latest.risk);
-    const pill = document.getElementById("curRisk");
-    pill.textContent = lvlText + " (" + latest.risk.toFixed(2) + ")";
-    pill.className = "pill " + lvlClass;
-    document.getElementById("insight").textContent = INSIGHTS[latest.state] || "";
-    document.getElementById("syncText").textContent = "Edge online \u00b7 last sync " + fmtTime(latest.timestamp);
+  function calculateDemoWellness(latest) {
+    const measurements = latest && latest.trendAnalysis && latest.trendAnalysis.measurements;
+    const heartRateChange = measurements && Number(measurements.heartRate && measurements.heartRate.percentChange);
+    const hrvChange = measurements && Number(measurements.hrv && measurements.hrv.percentChange);
+    if (!Number.isFinite(heartRateChange) || !Number.isFinite(hrvChange)) return null;
+    const averageAbsoluteChange = (Math.abs(heartRateChange) + Math.abs(hrvChange)) / 2;
+    return Math.round(Math.max(0, Math.min(100, 100 - averageAbsoluteChange)));
+  }
 
-    // Alert banner: newest high-risk event nobody has acknowledged yet
-    const pending = events.filter(e => e.risk >= 0.7 && !e.acknowledged_at).pop();
-    const banner = document.getElementById("alert");
-    if (pending) {
-      document.getElementById("alertText").textContent =
-        (STATE_NAMES[pending.state] || pending.state) + " at " + fmtTime(pending.timestamp) + " (" + pending.hr + " bpm).";
-      banner.classList.add("show");
-      banner.dataset.id = pending.event_id;
+  function trendComparison(currentValue, baselineValue) {
+    const difference = currentValue - baselineValue;
+    const percentChange = difference / baselineValue * 100;
+    const rounded = value => Number(value.toFixed(2));
+    return {
+      current: rounded(currentValue),
+      baseline: rounded(baselineValue),
+      difference: rounded(difference),
+      percentChange: rounded(percentChange),
+      trend: Math.abs(percentChange) <= 5 ? "close_to_baseline" : difference > 0 ? "above_baseline" : "below_baseline"
+    };
+  }
+
+  function createSimulatedEvent(timestamp, sequence) {
+    const variation = DEMO_VARIATIONS[sequence % DEMO_VARIATIONS.length];
+    const currentHr = DEMO_BASELINE.heartRate + variation.hr;
+    const currentHrv = DEMO_BASELINE.hrv + variation.hrv;
+    return {
+      event_id: "local-demo-reading-" + (sequence + 1),
+      patient_id: "sample",
+      state: "normal",
+      risk: 0.0,
+      hr: Math.round(currentHr),
+      timestamp,
+      personalBaseline: DEMO_BASELINE,
+      trendAnalysis: {
+        status: "success",
+        measurements: {
+          heartRate: trendComparison(currentHr, DEMO_BASELINE.heartRate),
+          hrv: trendComparison(currentHrv, DEMO_BASELINE.hrv)
+        }
+      },
+      simulated: true
+    };
+  }
+
+  function createDemoEvents() {
+    const now = Date.now();
+    const sampleStart = now - DEMO_SAMPLE.segments.length * DEMO_SAMPLE.segmentSeconds * 1000;
+    const sampleEvents = DEMO_SAMPLE.segments.map((segment, index) => ({
+      event_id: "local-demo-sample-" + (index + 1),
+      patient_id: "sample",
+      state: "normal",
+      risk: 0.0,
+      hr: segment.hr,
+      timestamp: new Date(sampleStart + segment.endSec * 1000).toISOString(),
+      personalBaseline: segment.personalBaseline,
+      trendAnalysis: segment.trendAnalysis,
+      sample: { startSec: segment.startSec, endSec: segment.endSec, hrv: segment.hrv, source: DEMO_SAMPLE.source }
+    }));
+    const historyCount = DEMO_HISTORY_LIMIT - sampleEvents.length;
+    const historyStart = sampleStart - historyCount * DEMO_INTERVAL_MS;
+    const historyEvents = Array.from({ length: historyCount }, (_, index) =>
+      createSimulatedEvent(new Date(historyStart + index * DEMO_INTERVAL_MS).toISOString(), index)
+    );
+    demoReadingSequence = historyCount;
+    return historyEvents.concat(sampleEvents);
+  }
+
+  function stopDemoStream() {
+    if (demoStreamTimer !== null) {
+      clearInterval(demoStreamTimer);
+      demoStreamTimer = null;
+    }
+  }
+
+  function startDemoStream() {
+    stopDemoStream();
+    demoStreamTimer = window.setInterval(() => {
+      if (!demoMode) {
+        stopDemoStream();
+        return;
+      }
+      demoEvents.push(createSimulatedEvent(new Date().toISOString(), demoReadingSequence++));
+      if (demoEvents.length > DEMO_HISTORY_LIMIT) demoEvents.shift();
+      render({ animate: true });
+    }, DEMO_INTERVAL_MS);
+  }
+
+  function setDemoMode(active) {
+    if (demoMode === active) return;
+    stopDemoStream();
+    demoMode = active;
+    demoEvents = demoMode ? createDemoEvents() : [];
+    events = demoMode ? demoEvents : liveEvents;
+    const toggle = document.getElementById("demoToggle");
+    toggle.setAttribute("aria-pressed", String(demoMode));
+    toggle.setAttribute("aria-label", demoMode ? "Turn off Demo Mode and return to real data" : "Turn on Demo Mode (sample data)");
+    toggle.title = demoMode ? "Exit Demo Mode" : "Demo Mode";
+    document.body.dataset.demo = demoMode ? "on" : "off";
+    document.getElementById("demoBanner").hidden = !demoMode;
+    document.title = demoMode ? "Moni-Buddy Dashboard (Sample data)" : "Moni-Buddy Dashboard";
+    document.getElementById("ackNote").hidden = true;
+    // A score from one view must never be shown in the other.
+    Health.set(null, { immediate: true });
+    if (!demoMode) checkBackend();
+    render();
+    if (demoMode) startDemoStream();
+  }
+
+  function renderHeartRateLine(animate = false) {
+    const pointLimit = demoMode ? DEMO_HISTORY_LIMIT : 12;
+    const points = events.map(event => Number(event.hr)).filter(Number.isFinite).slice(-pointLimit);
+    const path = document.getElementById("heartRateLine");
+    const point = document.getElementById("heartRatePoint");
+    const empty = document.getElementById("heartRateEmpty");
+    const stats = document.getElementById("hrStats");
+    path.setAttribute("d", "");
+    point.hidden = true;
+    empty.hidden = points.length > 0;
+    stats.hidden = !demoMode || !points.length;
+    if (demoMode && points.length) {
+      const average = points.reduce((sum, value) => sum + value, 0) / points.length;
+      setText("hrAverage", average.toFixed(1));
+      setText("hrMinimum", String(Math.min(...points)));
+      setText("hrMaximum", String(Math.max(...points)));
     } else {
-      banner.classList.remove("show");
+      setText("hrAverage", "--");
+      setText("hrMinimum", "--");
+      setText("hrMaximum", "--");
+    }
+    if (!points.length) {
+      path.classList.remove("is-updating");
+      return;
+    }
+    const low = Math.min(...points);
+    const range = Math.max(...points) - low || 1;
+    const coordinates = points.map((value, index) => ({
+      x: points.length === 1 ? 90 : index * 180 / (points.length - 1),
+      y: 34 - ((value - low) / range) * 25
+    }));
+    path.setAttribute("d", coordinates.map((coordinate, index) =>
+      (index ? "L" : "M") + coordinate.x.toFixed(1) + " " + coordinate.y.toFixed(1)
+    ).join(" "));
+    const last = coordinates[coordinates.length - 1];
+    point.setAttribute("cx", last.x.toFixed(1));
+    point.setAttribute("cy", last.y.toFixed(1));
+    point.hidden = false;
+    if (animate && !reducedMotion.matches) {
+      path.classList.remove("is-updating");
+      void path.getBoundingClientRect();
+      path.classList.add("is-updating");
+    } else {
+      path.classList.remove("is-updating");
+    }
+  }
+
+  function renderOptionalDetails(latest) {
+    const baseline = latest.personalBaseline;
+    const hasBaseline = baseline && typeof baseline === "object" && !Array.isArray(baseline);
+    const baselineCard = document.getElementById("baselineCard");
+    baselineCard.hidden = !hasBaseline;
+    if (hasBaseline) {
+      setText("baselineHr", formatMetric(baseline.heartRate, METRIC_UNITS.heartRate));
+      setText("baselineHrv", formatMetric(baseline.hrv, METRIC_UNITS.hrv));
+      setText("baselineSpo2", formatMetric(baseline.spo2, METRIC_UNITS.spo2));
     }
 
-    // Timeline (newest first)
+    const analysis = latest.trendAnalysis;
+    const hasAnalysis = analysis && typeof analysis === "object" && !Array.isArray(analysis);
+    const trendCard = document.getElementById("trendCard");
+    const rows = document.getElementById("trendRows");
+    trendCard.hidden = !hasAnalysis;
+    rows.replaceChildren();
+    if (hasAnalysis) {
+      const measurements = analysis.measurements && typeof analysis.measurements === "object"
+        ? Object.entries(analysis.measurements)
+        : [];
+      if (!measurements.length) {
+        const empty = document.createElement("div");
+        empty.className = "detail-empty";
+        empty.textContent = "No trend comparisons returned";
+        rows.appendChild(empty);
+      }
+      measurements.forEach(([key, comparison]) => {
+        if (!comparison || typeof comparison !== "object") return;
+        const row = document.createElement("div");
+        row.className = "trend-row";
+        const label = document.createElement("span");
+        label.textContent = METRIC_LABELS[key] || key;
+        const detail = document.createElement("strong");
+        const change = Number(comparison.percentChange);
+        detail.textContent = Number.isFinite(change)
+          ? (change > 0 ? "+" : "") + change.toFixed(1) + "%"
+          : "--";
+        const trend = document.createElement("small");
+        trend.textContent = comparison.trend || "";
+        detail.appendChild(trend);
+        row.append(label, detail);
+        rows.appendChild(row);
+      });
+    }
+    document.getElementById("detailGrid").hidden = !hasBaseline && !hasAnalysis;
+  }
+
+  function renderAlert() {
+    const pending = events.filter(event => Number(event.risk) >= .7 && !event.acknowledged_at).pop();
+    const banner = document.getElementById("alert");
+    if (!pending) {
+      banner.hidden = true;
+      return;
+    }
+    setText("alertText", stateName(pending.state) + " at " + eventTime(pending) + " (" + pending.hr + " bpm).");
+    banner.dataset.id = pending.event_id;
+    banner.hidden = false;
+  }
+
+  function renderTimeline() {
     const list = document.getElementById("timeline");
-    list.innerHTML = "";
-    [...events].reverse().forEach(e => {
-      const [txt, cls] = riskLevel(e.risk);
-      const li = document.createElement("li");
-      const ackText = e.acknowledged_at ? "Acknowledged by " + e.acknowledged_by : (e.risk >= 0.7 ? "Not acknowledged" : "");
-      li.innerHTML =
-        '<span class="t">' + fmtTime(e.timestamp) + '</span>' +
-        '<span class="s">' + (STATE_NAMES[e.state] || e.state) + ' \u00b7 ' + e.hr + ' bpm<div class="r">' + ackText + '</div></span>' +
-        '<span class="pill ' + cls + '">' + txt + '</span>';
-      list.appendChild(li);
-    });
-
-    // Risk chart
-    const labels = events.map(e => fmtTime(e.timestamp));
-    const data = events.map(e => e.risk);
-    if (chart) chart.destroy();
-    chart = new Chart(document.getElementById("riskChart"), {
-      type: "line",
-      data: { labels, datasets: [{ label: "Risk", data, borderColor: "#0f6b73", backgroundColor: "rgba(15,107,115,.12)", fill: true, tension: .25, pointRadius: 4 }] },
-      options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 1, title: { display: true, text: "Risk score" } } }, plugins: { legend: { display: false } } }
+    list.replaceChildren();
+    setText("eventCount", events.length + (events.length === 1 ? " event" : " events"));
+    if (!events.length) {
+      const empty = document.createElement("li");
+      empty.className = "timeline-empty";
+      empty.textContent = "No events received";
+      list.appendChild(empty);
+      return;
+    }
+    [...events].reverse().forEach(event => {
+      const [label, level] = riskLevel(Number(event.risk));
+      const item = document.createElement("li");
+      const time = document.createElement("span");
+      time.className = "timeline-time";
+      time.textContent = eventTime(event);
+      const details = document.createElement("span");
+      details.className = "timeline-state";
+      details.append(document.createTextNode(stateName(event.state) + " · " + event.hr + " bpm"));
+      if (event.sample) {
+        const segment = document.createElement("small");
+        segment.className = "timeline-ack";
+        segment.textContent = "Sample segment " + clock(event.sample.startSec) + "\u2013" + clock(event.sample.endSec);
+        details.appendChild(segment);
+      }
+      if (event.acknowledged_at || Number(event.risk) >= .7) {
+        const acknowledgement = document.createElement("small");
+        acknowledgement.className = "timeline-ack";
+        acknowledgement.textContent = event.acknowledged_at
+          ? "Acknowledged by " + (event.acknowledged_by || "user")
+          : "Not acknowledged";
+        details.appendChild(acknowledgement);
+      }
+      const risk = document.createElement("span");
+      risk.className = "timeline-risk";
+      risk.dataset.level = level;
+      risk.textContent = demoMode && Number.isFinite(Number(event.risk))
+        ? Number(event.risk).toFixed(2) + " · " + label
+        : label;
+      risk.setAttribute("aria-label", demoMode
+        ? "Risk score " + event.risk + ", " + label
+        : "Risk level " + label);
+      item.append(time, details, risk);
+      list.appendChild(item);
     });
   }
 
-  document.getElementById("ackBtn").addEventListener("click", () => {
-    const id = document.getElementById("alert").dataset.id;
-    const ev = events.find(e => e.event_id === id);
-    if (!ev) return;
-    ev.acknowledged_by = "Juju";            // later: the logged-in user
-    ev.acknowledged_at = new Date().toISOString();
-    const note = document.getElementById("ackNote");
-    note.textContent = "Acknowledged by " + ev.acknowledged_by + " at " + fmtTime(ev.acknowledged_at) + ".";
-    note.classList.add("show");
-    render();
-  });
-
-  async function loadEvents() {
-  try {
-    const res = await fetch(API_URL + "/patients/" + PATIENT_ID + "/events?limit=50");
-    if (!res.ok) throw new Error("API returned " + res.status);
-    events = await res.json();
-  } catch (err) {
-    document.getElementById("syncText").textContent = "API offline";
-    console.error(err);
+  function renderRiskChart(animate = false) {
+    if (typeof Chart === "undefined") {
+      const message = document.getElementById("chartEmpty");
+      message.textContent = "Chart library could not load. Check your internet connection.";
+      message.hidden = false;
+      return;
+    }
+    const canvas = document.getElementById("riskChart");
+    const context = canvas.getContext("2d");
+    const fill = context.createLinearGradient(0, 0, 0, 180);
+    fill.addColorStop(0, "rgba(255,255,255,.22)");
+    fill.addColorStop(1, "rgba(255,255,255,0)");
+    const labels = events.map(eventTime);
+    const data = events.map(event => Number(event.risk));
+    const stableZeroTrend = demoMode && data.length > 0 && data.every(value => Number.isFinite(value) && value === 0);
+    const latestRisk = data.length ? data[data.length - 1] : NaN;
+    setText("riskSummary", demoMode && Number.isFinite(latestRisk)
+      ? stableZeroTrend ? "Stable · " + latestRisk.toFixed(2) : "Latest · " + latestRisk.toFixed(2)
+      : "Event risk score");
+    document.getElementById("chartEmpty").hidden = events.length > 0;
+    if (!chart) {
+      chart = new Chart(context, {
+        type: "line",
+        data: { labels: [], datasets: [{ data: [], borderColor: "rgba(255,255,255,.9)", backgroundColor: fill, fill: true, tension: .42, borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 3, clip: false }] },
+        options: {
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: "rgba(255,255,255,.65)", maxTicksLimit: 5, font: { size: 9 } } },
+            y: { min: 0, max: 1, grid: { color: "rgba(255,255,255,.12)" }, border: { display: false }, ticks: { color: "rgba(255,255,255,.65)", maxTicksLimit: 4, font: { size: 9 } } }
+          },
+          plugins: { legend: { display: false }, tooltip: { enabled: events.length > 0 } }
+        }
+      });
+    }
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.data.datasets[0].label = demoMode ? "Risk score" : "";
+    chart.data.datasets[0].pointRadius = stableZeroTrend ? 2.2 : demoMode && data.length ? 1.2 : data.length === 1 ? 2 : 0;
+    chart.options.plugins.tooltip.enabled = events.length > 0;
+    chart.options.plugins.tooltip.callbacks = demoMode ? {
+      title: items => {
+        const event = events[items[0].dataIndex];
+        return event.sample
+          ? "Sample " + clock(event.sample.startSec) + "\u2013" + clock(event.sample.endSec)
+          : fmtDateTimeSeconds(event.timestamp);
+      },
+      label: item => "Risk score: " + Number(item.raw).toFixed(2)
+    } : {};
+    const maximumRisk = data.reduce((maximum, value) =>
+      Number.isFinite(value) ? Math.max(maximum, value) : maximum, 0);
+    const demoMaximum = data.length
+      ? Math.min(1, Math.max(0.2, Math.ceil(maximumRisk * 10) / 10))
+      : 1;
+    chart.options.scales.y.min = stableZeroTrend ? -0.02 : 0;
+    chart.options.scales.y.max = demoMode && data.length ? stableZeroTrend ? 0.12 : demoMaximum : 1;
+    chart.options.scales.y.ticks.callback = value =>
+      stableZeroTrend && Number(value) < 0 ? "" : Number(value).toFixed(2);
+    if (animate && !reducedMotion.matches) {
+      chart.options.animation = { duration: 450 };
+      chart.update();
+    } else {
+      chart.options.animation = false;
+      chart.update("none");
+    }
   }
-  if (events.length) render();
-}
-loadEvents();
-setInterval(loadEvents, 5000);
+
+  function renderConnection(latest) {
+    const dots = [document.getElementById("syncDot"), document.querySelector(".connection .sync-dot")];
+    let state = "idle", text, detail;
+    if (demoMode) {
+      text = "Watch not connected";
+      detail = "Sample data only";
+    } else if (latest) {
+      state = "online";
+      text = "Edge online";
+      detail = "Last sync " + fmtTime(latest.timestamp);
+    } else if (backendState === "online") {
+      text = "Backend online";
+      detail = "No events received";
+    } else if (backendState === "offline") {
+      state = "offline";
+      text = "Backend unreachable";
+      detail = "Last sync --";
+    } else {
+      text = "No event data";
+      detail = "Last sync --";
+    }
+    dots.forEach(dot => { dot.dataset.state = state; });
+    setText("syncText", text);
+    setText("lastSync", detail);
+  }
+
+  function render({ animate = false } = {}) {
+    events.sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp));
+    const latest = events[events.length - 1];
+    renderDemoSleep();
+    if (demoMode) Health.set(calculateDemoWellness(latest));
+    if (!latest) {
+      setText("curHr", "--");
+      setText("curState", "No event data");
+      setText("curRisk", "--");
+      setText("riskLabel", "No risk data");
+      document.getElementById("riskLabel").className = "risk-pill";
+      setText("curTime", "No events");
+      setText("watchFaceHr", "--");
+      setText("watchFaceState", "Awaiting events");
+      setText("watchTime", "AWAITING EVENTS");
+      document.querySelector(".watch-heart").style.removeProperty("--beat");
+      renderConnection(null);
+      setText("insight", "Insights will appear when event data is available.");
+      setText("insightState", "No current insight");
+      document.getElementById("alert").hidden = true;
+      document.getElementById("ackNote").hidden = true;
+      document.getElementById("baselineCard").hidden = true;
+      document.getElementById("trendCard").hidden = true;
+      document.getElementById("detailGrid").hidden = true;
+      document.getElementById("heartRateEmpty").hidden = false;
+      setText("watchFaceLabel", demoMode ? "SAMPLE DATA" : "LATEST EVENT");
+    } else {
+      const state = stateName(latest.state);
+      const risk = Number(latest.risk);
+      const [riskText, riskClass] = riskLevel(risk);
+      const lastEventTime = eventDateTime(latest);
+      setText("curHr", latest.hr == null ? "--" : latest.hr);
+      setText("curState", state);
+      setText("curRisk", Number.isFinite(risk) ? risk.toFixed(2) : "--");
+      setText("riskLabel", Number.isFinite(risk) ? riskText : "No risk data");
+      document.getElementById("riskLabel").className = "risk-pill" + (Number.isFinite(risk) ? " " + riskClass : "");
+      setText("curTime", lastEventTime);
+      setText("watchFaceHr", latest.hr == null ? "--" : latest.hr);
+      setText("watchFaceState", state);
+      setText("watchTime", lastEventTime.toUpperCase());
+      setText("watchFaceLabel", demoMode ? "SAMPLE DATA" : "LATEST EVENT");
+      // Same heartbeat glow as before, now paced to the displayed heart rate (clamped so it never strobes).
+      const beat = Number(latest.hr) > 0 ? Math.min(1.6, Math.max(.45, 60 / Number(latest.hr))) : 2.2;
+      document.querySelector(".watch-heart").style.setProperty("--beat", beat.toFixed(2) + "s");
+      renderConnection(latest);
+      setText("insight", INSIGHTS[latest.state] || "");
+      setText("insightState", INSIGHTS[latest.state] ? state + (demoMode ? " sample" : " event") : "No current insight");
+      renderOptionalDetails(latest);
+      renderAlert();
+    }
+    renderHeartRateLine(animate);
+    renderTimeline();
+    renderRiskChart(animate);
+  }
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const scrollBehavior = () => reducedMotion.matches ? "auto" : "smooth";
+
+  function setActiveTab(tab) {
+    document.querySelectorAll(".top-tab").forEach(link => {
+      const active = link.dataset.view === tab;
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+  }
+
+  function spotlight(element) {
+    element.classList.add("is-spotlit");
+    setTimeout(() => element.classList.remove("is-spotlit"), 1500);
+  }
+
+  // Tabs scroll to their section without hiding or cropping the rest of the page.
+  // On wide screens the cards are already visible, so a card tab highlights its card instead of jumping.
+  const TAB_TARGETS = { "general": "general", "heart-rate": "heartRateCard", "sleep": "sleepCard", "recovery": "recoveryCard" };
+
+  function goToTab(tab) {
+    const target = document.getElementById(TAB_TARGETS[tab]);
+    if (!target) return;
+    setActiveTab(tab);
+    if (tab === "general") {
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
+    } else {
+      target.scrollIntoView({ behavior: scrollBehavior(), block: "nearest" });
+      spotlight(target);
+    }
+    history.replaceState(null, "", "#" + (tab === "general" ? "general" : TAB_TARGETS[tab]));
+  }
+
+  function goToSection(section) {
+    if (section === "general") { goToTab("general"); return; }
+    const target = document.getElementById(section);
+    if (!target) return;
+    target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+    history.replaceState(null, "", "#" + section);
+  }
+
+  function bindNavigation() {
+    document.querySelectorAll(".top-tab").forEach(link => {
+      link.addEventListener("click", event => { event.preventDefault(); goToTab(link.dataset.view); });
+    });
+    document.querySelectorAll(".brand-mark, .brand-wordmark").forEach(link => {
+      link.addEventListener("click", event => { event.preventDefault(); goToTab("general"); });
+    });
+
+    const initial = location.hash.slice(1);
+    const tab = Object.keys(TAB_TARGETS).find(key => TAB_TARGETS[key] === initial);
+    if (tab && tab !== "general") setTimeout(() => goToTab(tab), 0);
+    else if (["insights", "history"].includes(initial)) setTimeout(() => goToSection(initial), 0);
+  }
+
+  function bindAcknowledgement() {
+    document.getElementById("ackBtn").addEventListener("click", () => {
+      const eventId = document.getElementById("alert").dataset.id;
+      const event = events.find(item => item.event_id === eventId);
+      if (!event) return;
+      event.acknowledged_by = "Maryam";
+      event.acknowledged_at = new Date().toISOString();
+      const note = document.getElementById("ackNote");
+      note.textContent = "Acknowledged at " + fmtTime(event.acknowledged_at) + ".";
+      note.hidden = false;
+      render();
+    });
+  }
+
+  function bindDemoToggle() {
+    document.getElementById("demoToggle").addEventListener("click", () => setDemoMode(!demoMode));
+  }
+
+  // ---- Overall Health floral percentage tracker ---------------------------------------------
+  // The Python code does not calculate an overall health percentage (signalQuality is only 0 or 1 and risk comes
+  // from the event). So nothing here invents one: with no value the wreath stays in its unfilled state and the
+  // centre says "Awaiting health data". When a real score exists, call MoniBuddy.setOverallHealth(0-100).
+  const Health = (() => {
+    const arcs = [...document.querySelectorAll(".sweep-arc")];
+    const feather = [3.2, 1.6, 0];
+    let shown = 0, target = null, frame = 0;
+
+    function paint(value) {
+      shown = value;
+      arcs.forEach((arc, index) => {
+        const length = value <= 0 ? 0 : value >= 100 ? 100 : Math.min(100, value + feather[index]);
+        arc.setAttribute("stroke-dasharray", length.toFixed(2) + " 100");
+      });
+      document.getElementById("healthPercentValue").textContent = Math.round(value);
+    }
+
+    function describe() {
+      const available = target !== null;
+      document.getElementById("healthPercent").hidden = !available;
+      document.getElementById("healthNote").hidden = !demoMode;
+      setText("overallHealthState", available
+        ? demoMode ? "Illustrative demo indicator" : "Health score"
+        : demoMode ? "Awaiting demo readings" : "Awaiting sufficient data");
+      document.getElementById("wreathSvg").setAttribute("aria-label",
+        available
+          ? (demoMode ? "Illustrative demo wellness indicator " : "Overall health ") + Math.round(target) + " percent"
+          : "Overall health wreath, awaiting sufficient data");
+    }
+
+    function set(value, options = {}) {
+      const number = value === null || value === undefined || value === "" ? NaN : Number(value);
+      target = Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : null;
+      describe();
+      cancelAnimationFrame(frame);
+      const goal = target === null ? 0 : target;
+      if (options.immediate || reducedMotion.matches || Math.abs(goal - shown) < .05) {
+        paint(goal);
+        return;
+      }
+      const from = shown, began = performance.now();
+      const duration = 450 + Math.min(900, Math.abs(goal - from) * 11);
+      const step = now => {
+        const t = Math.min(1, (now - began) / duration);
+        const eased = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        paint(from + (goal - from) * eased);
+        if (t < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    }
+
+    return { set, get: () => target };
+  })();
+
+  // ---- Backend reachability (existing GET / endpoint only) ----------------------------------
+  // no-cors resolves whenever the server answers, even though the backend does not send CORS headers.
+  // This only tells us FastAPI is up; it says nothing about the watch or the edge board.
+  async function checkBackend() {
+    if (demoMode) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    try {
+      await fetch(API_BASE + "/", { mode: "no-cors", cache: "no-store", signal: controller.signal });
+      backendState = "online";
+    } catch (error) {
+      backendState = "offline";
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!demoMode) renderConnection(events[events.length - 1] || null);
+  }
+
+  // Real events enter only here, and only into liveEvents. The backend currently has POST /events but no
+  // endpoint that returns events, so nothing calls this yet. Wire a real read path to it when one exists.
+  function ingestLiveEvents(list) {
+    if (!Array.isArray(list)) return 0;
+    let added = 0;
+    list.forEach(item => {
+      if (!item || typeof item !== "object" || !item.event_id || Number.isNaN(new Date(item.timestamp).getTime())) return;
+      if (!Number.isFinite(Number(item.risk)) || typeof item.state !== "string") return;
+      const existing = liveEvents.findIndex(event => event.event_id === item.event_id);
+      if (existing >= 0) liveEvents[existing] = { ...liveEvents[existing], ...item };
+      else { liveEvents.push({ ...item }); added += 1; }
+    });
+    if (!demoMode) render();
+    return added;
+  }
+
+  window.MoniBuddy = {
+    setOverallHealth: (value, options) => Health.set(value, options),
+    ingestLiveEvents,
+    get demoMode() { return demoMode; }
+  };
+
+  function bindFloralInteraction() {
+    const stage = document.getElementById("floralStage");
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (!motionPreference.matches) {
+      let pointerFrame = 0;
+      let scrollFrame = 0;
+      let pointerPosition;
+
+      stage.addEventListener("pointermove", event => {
+        if (event.pointerType === "touch") return;
+        pointerPosition = { x: event.clientX, y: event.clientY };
+        if (pointerFrame) return;
+        pointerFrame = requestAnimationFrame(() => {
+          pointerFrame = 0;
+          const bounds = stage.getBoundingClientRect();
+          const dx = (pointerPosition.x - (bounds.left + bounds.width / 2)) / (bounds.width / 2);
+          const dy = (pointerPosition.y - (bounds.top + bounds.height / 2)) / (bounds.height / 2);
+          const distanceFromWreath = Math.abs(Math.sqrt(dx * dx + dy * dy) - .68);
+          const strength = Math.max(0, 1 - distanceFromWreath / .32);
+          stage.classList.toggle("is-interacting", strength > .02);
+          stage.style.setProperty("--pointer-lift", (-strength * 1.5).toFixed(2) + "px");
+        });
+      }, { passive: true });
+      stage.addEventListener("pointerleave", () => {
+        stage.classList.remove("is-interacting");
+        stage.style.setProperty("--pointer-lift", "0px");
+      });
+
+      const updateParallax = () => {
+        if (scrollFrame) return;
+        scrollFrame = requestAnimationFrame(() => {
+          scrollFrame = 0;
+          const bounds = stage.getBoundingClientRect();
+          const offset = (window.innerHeight / 2 - (bounds.top + bounds.height / 2)) / Math.max(window.innerHeight / 2, 1);
+          const shift = Math.max(-1, Math.min(1, offset)) * 4;
+          document.getElementById("flowerParallax").style.transform = "translate3d(0," + shift.toFixed(2) + "px,0)";
+          document.getElementById("wreathRings").style.transform = "translate3d(0," + (-shift * .32).toFixed(2) + "px,0)";
+        });
+      };
+      window.addEventListener("scroll", updateParallax, { passive: true });
+      window.addEventListener("resize", updateParallax, { passive: true });
+      updateParallax();
+    }
+  }
+
+  bindNavigation();
+  bindAcknowledgement();
+  bindDemoToggle();
+  bindFloralInteraction();
+  Health.set(null, { immediate: true });
+  render();
+  checkBackend();
+  setInterval(checkBackend, 15000);
 </script>
 </body>
 </html>

@@ -27,6 +27,8 @@ class Event(BaseModel):
     risk: float = Field(ge=0, le=1)
     hr: int = Field(gt=0, lt=300)
     timestamp: datetime
+    personalBaseline: dict | None = None
+    trendAnalysis: dict | None = None
 
 
 @app.get("/")
