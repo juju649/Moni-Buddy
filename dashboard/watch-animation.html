@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moni-Buddy Watch Story</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout concept: one pinned stage. Scrolling scrubs a single timeline. The watch wakes, reads a rhythm, raises an alert, then steps aside for the system that feeds it. */
+:root {
+  --bg: #251d32;
+  --surface: #382e47;
+  --line: #594a68;
+  --fg: #fff7fb;
+  --mute: #d2c2d7;
+  --calm: #d7cdf8;
+  --alert: #f0c3d3;
+  --heart: #eba9c5;
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+.story { position: relative; height: 640vh; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px))); }
+.stage {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  background:
+    radial-gradient(60vmax 40vmax at 70% 45%, rgba(215,205,248,.14), transparent 60%),
+    var(--bg);
+}
+.top {
+  position: absolute; inset: 14px max(16px, env(safe-area-inset-right, 0px)) auto max(16px, env(safe-area-inset-left, 0px));
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 5;
+}
+.brand { white-space: nowrap; font-family: var(--display); font-weight: 700; font-size: 1.05rem; letter-spacing: .01em; display: flex; align-items: center; gap: 8px; }
+.brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--heart); display: inline-block; }
+.phases { display: flex; gap: 14px; font: 500 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.phases span { transition: color .2s; display: flex; align-items: center; gap: 6px; }
+.phases span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; }
+.phases span.on { color: var(--fg); }
+.phases span.on::before { background: var(--calm); border-color: var(--calm); }
+.bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--line); z-index: 5; }
+.bar b { display: block; height: 100%; width: 0; background: var(--calm); }
+
+/* watch */
+.watch-layer { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1400px; }
+.watch-wrap { will-change: transform; }
+.shake { will-change: transform; }
+.watch {
+  position: relative; font-size: clamp(10px, 2.15vmin, 18px);
+  width: 17em; height: 21em; transform-style: preserve-3d; will-change: transform;
+}
+.band { position: absolute; left: 50%; width: 11em; margin-left: -5.5em; background: linear-gradient(90deg, #8b78af, #d7cdf8 50%, #8b78af); }
+.band.t { bottom: 18em; height: 10em; border-radius: 2.2em 2.2em .4em .4em; transform-origin: bottom; }
+.band.b { top: 18em; height: 10em; border-radius: .4em .4em 2.2em 2.2em; transform-origin: top; }
+.band.t::after, .band.b::after { content: ""; position: absolute; left: 50%; width: .7em; margin-left: -.35em; height: .7em; border-radius: 50%; background: #594a68; }
+.band.t::after { top: 2.6em; box-shadow: 0 1.5em 0 #594a68, 0 3em 0 #594a68; }
+.band.b::after { top: 2.6em; box-shadow: 0 1.5em 0 #594a68, 0 3em 0 #594a68; }
+.case {
+  position: absolute; inset: 1.5em 0; border-radius: 4.2em;
+  background: linear-gradient(160deg, #eadcf2, #9d8ac2 55%, #f0c3d3);
+  padding: .8em; box-shadow: 0 2.5em 5em rgba(24,16,34,.55), inset 0 0 0 .12em rgba(255,255,255,.24);
+}
+.crown { position: absolute; right: -.7em; top: 6.4em; width: 1em; height: 3em; border-radius: .4em; background: linear-gradient(90deg, #9d8ac2, #eadcf2); }
+.screen {
+  position: relative; width: 100%; height: 100%; border-radius: 3.5em; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #594563, #241b31 75%);
+}
+.ring { position: absolute; inset: 1.2em 1.2em auto 1.2em; width: calc(100% - 2.4em); }
+.ring circle { fill: none; stroke-width: 6; stroke-linecap: round; }
+.ring .track { stroke: #594a68; }
+.ring .arc { stroke: var(--calm); }
+.read { position: absolute; left: 0; right: 0; top: 4em; text-align: center; }
+.read .lab { font: 500 .62em var(--mono); letter-spacing: .14em; color: var(--mute); }
+.read .num { font: 700 4em/1 var(--display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: .05em; }
+.read .num small { font: 500 .22em var(--mono); color: var(--mute); margin-left: .4em; letter-spacing: .1em; }
+.read .st { font: 500 .72em var(--body); margin-top: .5em; color: var(--calm); min-height: 1.4em; }
+.heart { position: absolute; left: 50%; top: 2.6em; width: 1.3em; margin-left: -.65em; color: var(--heart); }
+.ecg { position: absolute; left: 1.4em; right: 1.4em; bottom: 2em; width: calc(100% - 2.8em); height: 2.6em; }
+.ecg path { fill: none; stroke: var(--heart); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.clock { position: absolute; left: 0; right: 0; bottom: 1.1em; text-align: center; font: 500 .6em var(--mono); letter-spacing: .1em; color: var(--mute); }
+.buzz { position: absolute; inset: 1.5em 0; border-radius: 4.2em; border: .25em solid var(--alert); opacity: 0; pointer-events: none; }
+
+/* captions */
+.captions { position: absolute; display: grid; z-index: 3; }
+.cap { grid-area: 1 / 1; opacity: 0; align-self: center; }
+.cap.c1 { opacity: 1; }
+.eyebrow { font: 500 .74rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--calm); margin: 0 0 14px; }
+.cap h1, .cap h2 { font-family: var(--display); font-weight: 700; line-height: 1.04; letter-spacing: -.02em; margin: 0 0 16px; text-wrap: balance; }
+.cap h1 { font-size: clamp(2.4rem, 6vw, 4.6rem); }
+.cap h2 { font-size: clamp(1.9rem, 4.4vw, 3.2rem); }
+.cap.c5 h2 { max-width: 14ch; }
+.cap p { margin: 0; color: var(--mute); max-width: 30rem; font-size: 1.05rem; }
+.hint { margin-top: 28px; font: 500 .72rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); display: flex; align-items: center; gap: 10px; }
+.hint i { width: 1px; height: 28px; background: linear-gradient(var(--mute), transparent); display: inline-block; }
+.cap .alertdot { color: var(--alert); }
+
+.cards { position: absolute; z-index: 3; display: grid; gap: 12px; }
+.card { opacity: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.card h3 { font: 700 1.02rem var(--display); margin: 0 0 4px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.card h3 span { font: 500 .7rem var(--mono); color: var(--calm); letter-spacing: .08em; white-space: nowrap; }
+.card p { margin: 0; font-size: .92rem; color: var(--mute); }
+
+@media (min-width: 860px) {
+  .captions { left: max(16px, env(safe-area-inset-left, 0px)); top: 0; bottom: 0; width: min(34rem, 42vw); }
+  .cards { right: max(16px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); width: min(26rem, 38vw); }
+}
+@media (max-width: 859px) {
+  .watch-layer { inset: 44px 0 42% 0; overflow: hidden; }
+  .watch { font-size: clamp(7px, 1.8vh, 12px); }
+  .cap.c5 { display: none; }
+  .captions { left: 0; right: 0; bottom: 0; height: 40%; padding: 0 max(16px, env(safe-area-inset-left, 0px)); }
+  .cards { left: 0; right: 0; bottom: 14px; padding: 0 max(16px, env(safe-area-inset-left, 0px)); gap: 8px; }
+  .card { padding: 10px 12px; }
+  .card p { font-size: .85rem; }
+  .phases { display: none; }
+  .cap h1 { font-size: clamp(2rem, 9vw, 2.8rem); }
+  .cap h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); }
+  .cap p { font-size: .95rem; }
+  .hint { margin-top: 14px; }
+}
+
+.after strong { color: var(--fg); font-family: var(--display); }
+@media (prefers-reduced-motion: reduce) { .story { height: auto; } .stage { position: relative; } }
+</style>
+</head>
+<body>
+
+<main>
+<section class="story" id="story">
+  <div class="stage">
+    <div class="top">
+      <div class="brand"><i></i>Moni-Buddy</div>
+      <div class="phases" id="phases"><span>Signal</span><span>Baseline</span><span>Alert</span><span>System</span></div>
+    </div>
+
+    <div class="watch-layer">
+      <div class="watch-wrap" id="wrap">
+        <div class="shake" id="shake">
+          <div class="watch" id="watch" role="img" aria-label="Concept smartwatch showing heart rate, a state ring and an ECG trace">
+            <div class="band t" id="bandT"></div>
+            <div class="band b" id="bandB"></div>
+            <div class="buzz"></div><div class="buzz"></div><div class="buzz"></div>
+            <div class="case">
+              <div class="crown"></div>
+              <div class="screen" id="screen">
+                <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle class="track" cx="60" cy="60" r="52"/>
+                  <circle class="arc" id="arc" cx="60" cy="60" r="52" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+                </svg>
+                <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>
+                <div class="read">
+                  <div class="lab">HEART RATE</div>
+                  <div class="num"><span id="hr">--</span><small>BPM</small></div>
+                  <div class="st" id="st">Waiting for signal</div>
+                </div>
+                <svg class="ecg" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path id="ecg" d=""/></svg>
+                <div class="clock" id="clock">DEMO DATA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="captions" id="caps">
+      <div class="cap c1">
+        <p class="eyebrow">Concept watch</p>
+        <h1>Your heart, one glance away.</h1>
+        <p>A watch face for Moni-Buddy. It shows the numbers the SK-AM62B board finishes processing, so you see the result without opening the dashboard.</p>
+        <div class="hint"><i></i>Scroll to wake it</div>
+      </div>
+      <div class="cap c2">
+        <p class="eyebrow">1 &middot; Signal</p>
+        <h2>The rhythm draws itself.</h2>
+        <p>The AFE4950 records ECG at 500 samples per second. The board filters it and marks every R-peak. The watch draws the trace.</p>
+      </div>
+      <div class="cap c3">
+        <p class="eyebrow">2 &middot; Baseline</p>
+        <h2>It learns your normal.</h2>
+        <p>The ring fills as heart rate locks on. At 93 BPM with signal quality 97, the state reads normal. The twin keeps this as your baseline.</p>
+      </div>
+      <div class="cap c4">
+        <p class="eyebrow alertdot">3 &middot; Alert</p>
+        <h2>A change gets noticed.</h2>
+        <p>When heart rate climbs well above baseline, the ring turns blush pink and the watch buzzes. This is a simulated 128 BPM event for the demo.</p>
+      </div>
+      <div class="cap c5">
+        <p class="eyebrow">4 &middot; System</p>
+        <h2>From board to wrist.</h2>
+        <p>Three steps carry one result from the sensor to the watch.</p>
+      </div>
+    </div>
+
+    <div class="cards" id="cards">
+      <div class="card"><h3>SK-AM62B board <span>FILTER + R-PEAKS</span></h3><p>Cleans the recording, drops bad beats, scores signal quality once per second.</p></div>
+      <div class="card"><h3>CardioTwin dashboard <span>TWIN</span></h3><p>Draws the waveform, keeps the baseline, flags a state and a risk number.</p></div>
+      <div class="card"><h3>Moni-Buddy backend <span>EVENT</span></h3><p>Stores each event so the care dashboard and the watch show the same result.</p></div>
+    </div>
+
+    <div class="bar"><b id="prog"></b></div>
+  </div>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/animejs@4.0.2/lib/anime.iife.min.js"></script>
+<script>
+(function () {
+  var story = document.getElementById('story');
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  // Illustrative ECG: three beats with P, QRS and T shapes.
+  (function () {
+    var d = '';
+    for (var b = 0; b < 3; b++) {
+      var x = b * 66.6;
+      var f = function (n) { return (x + n).toFixed(1); };
+      d += (b === 0 ? 'M' + f(0) + ',20' : '') +
+        ' L' + f(8) + ',20 Q' + f(11) + ',15 ' + f(14) + ',20 L' + f(20) + ',20 L' + f(22) + ',23 L' + f(26) + ',3 L' + f(30) + ',33 L' + f(33) + ',20' +
+        ' L' + f(42) + ',20 Q' + f(48) + ',12 ' + f(54) + ',20 L' + f(66.6) + ',20';
+    }
+    document.getElementById('ecg').setAttribute('d', d);
+  })();
+
+  var els = {
+    hr: document.getElementById('hr'), st: document.getElementById('st'), arc: document.getElementById('arc'),
+    prog: document.getElementById('prog'), clock: document.getElementById('clock'),
+    phases: document.querySelectorAll('#phases span'), screen: document.getElementById('screen')
+  };
+  var CALM = [215, 205, 248], ALERT = [240, 195, 211];
+  function mix(a, b, k) { return 'rgb(' + a.map(function (v, i) { return Math.round(v + (b[i] - v) * k); }).join(',') + ')'; }
+  function clamp(v) { return Math.max(0, Math.min(1, v)); }
+  function ease(v) { v = clamp(v); return v * v * (3 - 2 * v); }
+
+  // Phase boundaries in timeline units.
+  var T = { wake: 120, trace: 130, lock: 300, rest: 520, rise: 640, hold: 780, end: 1000 };
+
+  function render(t) {
+    var hr = null;
+    if (t >= T.lock && t < T.rest) hr = 93 * ease((t - T.lock) / (T.rest - T.lock));
+    else if (t >= T.rest && t < T.rise) hr = 93;
+    else if (t >= T.rise && t < T.hold) hr = 93 + 35 * ease((t - T.rise) / (T.hold - T.rise));
+    else if (t >= T.hold) hr = 128;
+    els.hr.textContent = hr === null ? '--' : String(Math.round(hr));
+    var k = clamp((t - T.rise) / 80);
+    var color = mix(CALM, ALERT, k);
+    els.arc.style.stroke = color;
+    els.arc.setAttribute('stroke-dashoffset', String(1 - (hr === null ? 0 : clamp(hr / 160))));
+    var label = 'Waiting for signal';
+    if (t >= T.lock) label = 'Locking on';
+    if (t >= T.rest - 20) label = 'Normal range';
+    if (hr !== null && hr >= 110) label = 'Elevated, above baseline';
+    els.st.textContent = label;
+    els.st.style.color = color;
+    els.clock.textContent = t >= T.rise ? 'SIMULATED EVENT' : 'DEMO DATA';
+    els.prog.style.width = (clamp(t / T.end) * 100).toFixed(1) + '%';
+    var ph = t < T.lock - 1 ? 0 : t < T.rise - 1 ? 1 : t < T.hold + 20 ? 2 : 3;
+    if (t < 20) ph = -1;
+    for (var i = 0; i < els.phases.length; i++) els.phases[i].classList.toggle('on', i === ph);
+  }
+
+  var tl = null;
+  function build() {
+    if (tl) { tl.revert(); tl = null; }
+    if (!window.anime) { render(T.end); return; }
+    var a = window.anime;
+    var wide = window.innerWidth >= 860;
+    var vw = window.innerWidth;
+    var x0 = wide ? vw * 0.2 : 0, x1 = wide ? vw * 0.02 : 0;
+    var s1 = wide ? 0.92 : 0.8;
+    var ecg = a.svg.createDrawable('#ecg');
+
+    tl = a.createTimeline({
+      defaults: { ease: 'linear' },
+      autoplay: reduce ? false : a.onScroll({ target: story, enter: 'top top', leave: 'bottom bottom', sync: true }),
+      onUpdate: function (self) { render(self.currentTime); }
+    });
+
+    // Wake: the watch turns toward the viewer.
+    tl.add('#watch', { rotateY: [-30, 0], rotateX: [14, 0], duration: 130, ease: 'outCubic' }, 0)
+      .add('#wrap', { scale: [0.86, 1], translateX: [x0, x0], duration: 130, ease: 'outCubic' }, 0)
+      .add('#bandT', { scaleY: [0.55, 1], duration: 130, ease: 'outCubic' }, 0)
+      .add('#bandB', { scaleY: [0.55, 1], duration: 130, ease: 'outCubic' }, 0)
+      .add('#screen', { opacity: [0.35, 1], duration: 120 }, 20)
+      .add('.c1', { opacity: [1, 0], translateY: [0, -26], duration: 50 }, 90)
+
+    // 1 Signal
+      .add('.c2', { opacity: [0, 1], translateY: [26, 0], duration: 50 }, 140)
+      .add(ecg, { draw: ['0 0', '0 1'], duration: 150 }, 150)
+      .add('.c2', { opacity: [1, 0], translateY: [0, -26], duration: 50 }, 270)
+
+    // 2 Baseline
+      .add('.c3', { opacity: [0, 1], translateY: [26, 0], duration: 50 }, 310)
+      .add('.c3', { opacity: [1, 0], translateY: [0, -26], duration: 50 }, 480)
+
+    // 3 Alert
+      .add('.c4', { opacity: [0, 1], translateY: [26, 0], duration: 50 }, 560)
+      .add('.buzz', { scale: [1, 1.55], opacity: [0.7, 0], duration: 120, delay: a.stagger(28) }, 650)
+      .add('.buzz', { scale: [1, 1.55], opacity: [0.7, 0], duration: 120, delay: a.stagger(28) }, 720)
+      .add('#shake', {
+        translateX: [{ to: -9, duration: 16 }, { to: 9, duration: 16 }, { to: -7, duration: 16 }, { to: 7, duration: 16 }, { to: -4, duration: 16 }, { to: 4, duration: 16 }, { to: 0, duration: 16 }]
+      }, 650)
+      .add('.c4', { opacity: [1, 0], translateY: [0, -26], duration: 50 }, 770)
+
+    // 4 System
+      .add('.c5', { opacity: [0, 1], translateY: [26, 0], duration: 50 }, 820)
+      .add('#wrap', { translateX: [x0, x1], scale: [1, s1], duration: 120, ease: 'inOutCubic' }, 800)
+      .add('.card', { opacity: [0, 1], translateX: [46, 0], duration: 110, delay: a.stagger(35) }, 860);
+
+    // Hold the final frame so the last scroll feels settled.
+    tl.add('#prog', { opacity: [1, 1], duration: 10 }, 990);
+
+    if (reduce) { tl.seek(tl.duration); render(T.end); }
+    else render(0);
+  }
+
+  var timer = null;
+  window.addEventListener('resize', function () { clearTimeout(timer); timer = setTimeout(build, 250); });
+  build();
+})();
+</script>
+<script>
+window.addEventListener('keydown', function (event) {
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  window.parent.postMessage('monibuddy-watch-egg-close', '*');
+});
+</script>
+</body>
+</html>

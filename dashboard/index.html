@@ -189,7 +189,7 @@
     z-index: 1;
     display: grid;
     min-height: 70px;
-    grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+    grid-template-columns: minmax(0,1fr) auto;
     align-items: center;
     gap: 16px;
     padding: 10px 24px;
@@ -203,24 +203,6 @@
   .greeting { color: var(--muted); font-size: .63rem; }
   .patient-context { color: var(--muted); font-size: .7rem; white-space: nowrap; }
   .patient-context strong { color: #fff; font-weight: 500; }
-  .top-nav { display: flex; align-items: center; justify-content: center; gap: 5px; }
-  .top-tab {
-    padding: 8px 13px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    color: rgba(255,255,255,.74);
-    background: transparent;
-    font-size: .75rem;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background .2s ease,color .2s ease;
-  }
-  .top-tab:hover, .top-tab:focus-visible, .top-tab.active {
-    border-color: rgba(255,255,255,.18);
-    color: #fff;
-    background: rgba(255,255,255,.15);
-    outline: none;
-  }
   .connection {
     display: flex;
     align-items: center;
@@ -483,6 +465,9 @@
     color: rgba(255,255,255,.9);
     background: rgba(255,255,255,.1);
   }
+  .watch-egg-trigger { padding: 0; cursor: pointer; transition: transform .18s ease,background .18s ease; }
+  .watch-egg-trigger:hover { background: rgba(255,255,255,.2); transform: scale(1.06); }
+  .watch-egg-trigger:focus-visible { outline: 2px solid rgba(255,255,255,.9); outline-offset: 3px; }
   .metric-icon svg { width: 14px; height: 14px; }
   .metric-value { margin-top: 7px; font-size: clamp(1.7rem,2.7vw,2.2rem); font-weight: 300; line-height: 1.05; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
   .metric-value small { margin-left: 4px; color: var(--muted); font-size: .68rem; letter-spacing: 0; }
@@ -765,7 +750,6 @@
     white-space: nowrap;
   }
   body[data-demo="on"] .sample-chip { display: inline-flex; }
-  .is-spotlit { box-shadow: 0 0 0 2px rgba(255,255,255,.7),0 0 30px rgba(255,255,255,.35),0 12px 28px rgba(71,61,105,.08) !important; }
   .glass-card { transition: box-shadow .5s ease,background .2s ease,transform .2s ease; }
   @keyframes heart-glow {
     0%,100% { transform: translateX(-50%) scale(1); opacity: .85; }
@@ -787,10 +771,6 @@
     .floral-stage { width: min(100%,440px); }
     .metrics-grid { min-height: 410px; }
   }
-  @media (min-width: 761px) and (max-width: 1020px) {
-    .topbar { grid-template-columns: minmax(0,1fr) auto; row-gap: 6px; }
-    .top-nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
-  }
   @media (max-width: 760px) {
     body { display: block; padding: 0; }
     .login-screen { padding: 15px; }
@@ -810,8 +790,6 @@
     .header-icon, .profile-avatar { width: 29px; height: 29px; }
     .account-action { width: 29px; min-height: 29px; height: 29px; justify-content: center; padding: 0; border-radius: 50%; }
     .account-toggle-name { display: none; }
-    .top-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 2px; width: 100%; }
-    .top-tab { flex: 1; padding: 7px 4px; font-size: .67rem; text-align: center; }
     .connection { max-width: 155px; padding: 6px 8px; }
     .connection-copy span { font-size: .63rem; }
     .connection-copy small { font-size: .55rem; }
@@ -855,6 +833,44 @@
     .patient-greeting { display: none; }
     .header-actions .header-icon { display: none; }
     .topbar { grid-template-columns: auto minmax(0,1fr); }
+  }
+  #watchEggOverlay {
+    position: fixed;
+    z-index: 2000;
+    inset: 0;
+    overflow: hidden;
+    background: #251d32;
+    opacity: 0;
+    transform: scale(.06);
+    transform-origin: var(--watch-egg-origin-x,50vw) var(--watch-egg-origin-y,50vh);
+    transition: opacity .32s ease,transform .42s cubic-bezier(.2,.8,.2,1);
+  }
+  #watchEggOverlay.is-open { opacity: 1; transform: scale(1); }
+  #watchEggFrame { display: block; width: 100%; height: 100%; border: 0; opacity: 0; transition: opacity .18s ease; }
+  #watchEggFrame.is-loaded { opacity: 1; }
+  #watchEggClose {
+    position: fixed;
+    z-index: 1;
+    top: max(14px,env(safe-area-inset-top,0px));
+    right: max(14px,env(safe-area-inset-right,0px));
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.45);
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(70,53,85,.88);
+    box-shadow: 0 4px 18px rgba(24,16,34,.3);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  #watchEggClose:hover, #watchEggClose:focus-visible { background: #705c87; outline: 2px solid rgba(255,255,255,.85); outline-offset: 3px; }
+  #watchEggClose svg { width: 20px; height: 20px; }
+  @media (prefers-reduced-motion: reduce) {
+    #watchEggOverlay, #watchEggFrame { transition: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { scroll-behavior: auto !important; animation: none !important; transition-duration: .01ms !important; }
@@ -932,12 +948,6 @@
           <span class="patient-context">Patient <strong id="patientId">Choose demo patient</strong><span class="demo-patient-tag" id="patientKind" hidden>DEMO PATIENT</span></span>
         </div>
       </div>
-      <nav class="top-nav" aria-label="Dashboard views">
-        <a class="top-tab active" data-view="general" href="#general" aria-current="page">General</a>
-        <a class="top-tab" data-view="heart-rate" href="#heartRateCard">Heart Rate</a>
-        <a class="top-tab" data-view="sleep" href="#sleepCard">Sleep</a>
-        <a class="top-tab" data-view="recovery" href="#recoveryCard">Recovery</a>
-      </nav>
       <div class="header-actions">
         <div class="connection" aria-live="polite">
           <span class="sync-dot" data-state="idle" aria-hidden="true"></span>
@@ -1065,7 +1075,7 @@
           <article id="watchCard" class="metric-card watch-card glass-card">
             <div class="metric-head">
               <h2>Watch Status<span class="sample-chip">SAMPLE DATA</span></h2>
-              <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="6" width="14" height="12" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 3h8v3H8zm0 15h8v3H8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+              <button class="metric-icon watch-egg-trigger" id="watchEggTrigger" type="button" aria-label="Open the hidden watch animation" title="Open the hidden watch animation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="6" width="14" height="12" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 3h8v3H8zm0 15h8v3H8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
             </div>
             <div class="watch-card-content">
               <div class="watch-mini" aria-hidden="true">
@@ -1143,6 +1153,108 @@
     </main>
   </div>
 </div>
+
+<div id="watchEggOverlay" role="dialog" aria-modal="true" aria-label="Moni-Buddy watch animation" hidden>
+  <iframe id="watchEggFrame" title="Moni-Buddy scroll-driven watch story" sandbox="allow-scripts"></iframe>
+  <button id="watchEggClose" type="button" aria-label="Close watch animation" title="Close watch animation">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<script>
+  (() => {
+    const trigger = document.getElementById("watchEggTrigger");
+    const overlay = document.getElementById("watchEggOverlay");
+    const frame = document.getElementById("watchEggFrame");
+    const closeButton = document.getElementById("watchEggClose");
+    const dashboard = document.getElementById("dashboardShell");
+    const html = document.documentElement;
+    const body = document.body;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let active = false;
+    let closing = false;
+    let savedState;
+
+    function lockDashboard() {
+      savedState = {
+        x: window.scrollX,
+        y: window.scrollY,
+        viewportWidth: html.clientWidth,
+        htmlOverflow: html.style.overflow,
+        htmlScrollBehavior: html.style.scrollBehavior,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyWidth: body.style.width,
+        bodyOverflow: body.style.overflow,
+        dashboardInert: dashboard.inert
+      };
+      html.style.overflow = "hidden";
+      body.style.position = "fixed";
+      body.style.top = -savedState.y + "px";
+      body.style.left = -savedState.x + "px";
+      body.style.width = savedState.viewportWidth + "px";
+      body.style.overflow = "hidden";
+      dashboard.inert = true;
+    }
+
+    function restoreDashboard() {
+      html.style.overflow = savedState.htmlOverflow;
+      body.style.position = savedState.bodyPosition;
+      body.style.top = savedState.bodyTop;
+      body.style.left = savedState.bodyLeft;
+      body.style.width = savedState.bodyWidth;
+      body.style.overflow = savedState.bodyOverflow;
+      dashboard.inert = savedState.dashboardInert;
+      html.style.scrollBehavior = "auto";
+      window.scrollTo(savedState.x, savedState.y);
+      html.style.scrollBehavior = savedState.htmlScrollBehavior;
+    }
+
+    function openWatchEgg() {
+      if (active) return;
+      active = true;
+      const bounds = trigger.getBoundingClientRect();
+      overlay.style.setProperty("--watch-egg-origin-x", bounds.left + bounds.width / 2 + "px");
+      overlay.style.setProperty("--watch-egg-origin-y", bounds.top + bounds.height / 2 + "px");
+      lockDashboard();
+      overlay.hidden = false;
+      frame.classList.remove("is-loaded");
+      frame.src = new URL("watch-animation.html", window.location.href).href;
+      requestAnimationFrame(() => overlay.classList.add("is-open"));
+      closeButton.focus({ preventScroll: true });
+    }
+
+    function closeWatchEgg() {
+      if (!active || closing) return;
+      closing = true;
+      overlay.classList.remove("is-open");
+      window.setTimeout(() => {
+        overlay.hidden = true;
+        frame.src = "about:blank";
+        frame.classList.remove("is-loaded");
+        restoreDashboard();
+        active = false;
+        closing = false;
+        trigger.focus({ preventScroll: true });
+      }, reducedMotion.matches ? 0 : 450);
+    }
+
+    trigger.addEventListener("click", openWatchEgg);
+    frame.addEventListener("load", () => {
+      if (active && frame.getAttribute("src") !== "about:blank") frame.classList.add("is-loaded");
+    });
+    closeButton.addEventListener("click", closeWatchEgg);
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && active) closeWatchEgg();
+    });
+    window.addEventListener("message", event => {
+      if (event.source !== frame.contentWindow || event.data !== "monibuddy-watch-egg-close") return;
+      if (event.origin !== "null" && event.origin !== window.location.origin) return;
+      closeWatchEgg();
+    });
+  })();
+</script>
 
 <script>
   // Two completely separate stores. Demo events live only in `demoEvents` (browser memory).
@@ -1861,57 +1973,24 @@
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const scrollBehavior = () => reducedMotion.matches ? "auto" : "smooth";
 
-  function setActiveTab(tab) {
-    document.querySelectorAll(".top-tab").forEach(link => {
-      const active = link.dataset.view === tab;
-      link.classList.toggle("active", active);
-      if (active) link.setAttribute("aria-current", "page");
-      else link.removeAttribute("aria-current");
-    });
-  }
-
-  function spotlight(element) {
-    element.classList.add("is-spotlit");
-    setTimeout(() => element.classList.remove("is-spotlit"), 1500);
-  }
-
-  // Tabs scroll to their section without hiding or cropping the rest of the page.
-  // On wide screens the cards are already visible, so a card tab highlights its card instead of jumping.
-  const TAB_TARGETS = { "general": "general", "heart-rate": "heartRateCard", "sleep": "sleepCard", "recovery": "recoveryCard" };
-
-  function goToTab(tab) {
-    const target = document.getElementById(TAB_TARGETS[tab]);
-    if (!target) return;
-    setActiveTab(tab);
-    if (tab === "general") {
+  function goToSection(section) {
+    if (section === "general") {
       window.scrollTo({ top: 0, behavior: scrollBehavior() });
     } else {
-      target.scrollIntoView({ behavior: scrollBehavior(), block: "nearest" });
-      spotlight(target);
+      const target = document.getElementById(section);
+      if (!target) return;
+      target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     }
-    history.replaceState(null, "", "#" + (tab === "general" ? "general" : TAB_TARGETS[tab]));
-  }
-
-  function goToSection(section) {
-    if (section === "general") { goToTab("general"); return; }
-    const target = document.getElementById(section);
-    if (!target) return;
-    target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     history.replaceState(null, "", "#" + section);
   }
 
   function bindNavigation() {
-    document.querySelectorAll(".top-tab").forEach(link => {
-      link.addEventListener("click", event => { event.preventDefault(); goToTab(link.dataset.view); });
-    });
     document.querySelectorAll(".brand-mark, .brand-wordmark").forEach(link => {
-      link.addEventListener("click", event => { event.preventDefault(); goToTab("general"); });
+      link.addEventListener("click", event => { event.preventDefault(); goToSection("general"); });
     });
 
     const initial = location.hash.slice(1);
-    const tab = Object.keys(TAB_TARGETS).find(key => TAB_TARGETS[key] === initial);
-    if (tab && tab !== "general") setTimeout(() => goToTab(tab), 0);
-    else if (["insights", "history"].includes(initial)) setTimeout(() => goToSection(initial), 0);
+    if (["insights", "history"].includes(initial)) setTimeout(() => goToSection(initial), 0);
   }
 
   function bindAcknowledgement() {
