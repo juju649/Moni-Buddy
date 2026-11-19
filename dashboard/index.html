@@ -398,7 +398,7 @@
   .sleep-caveat { margin: 0; color: rgba(255,255,255,.72); font-size: .52rem; line-height: 1.2; }
   .watch-card { display: flex; flex-direction: column; }
   .watch-card-content { display: grid; flex: 1; justify-items: center; align-content: center; gap: 8px; margin-top: 2px; }
-  .watch-mini { position: relative; width: 101px; height: 147px; overflow: hidden; }
+  .watch-mini { position: relative; width: 150px; height: 190px; overflow: visible; }
   .watch-device { position: absolute; top: 1px; left: 3px; width: 186px; height: 270px; transform: scale(.51); transform-origin: top left; }
   .watch-band { position: absolute; left: 53px; width: 80px; height: 91px; border: 1px solid rgba(255,255,255,.34); background: linear-gradient(90deg,#b5a9d8,#e1d7f0 48%,#b4a8d7); }
   .watch-band.top { top: 0; border-radius: 26px 26px 9px 9px; }
@@ -421,6 +421,179 @@
   .watch-meta span { display: block; color: var(--muted); font-size: .58rem; }
   .watch-meta strong { display: block; margin-top: 1px; font-size: .68rem; font-weight: 500; overflow-wrap: anywhere; }
   .watch-meta .risk-pill { display: inline-block; margin-top: 2px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.13); font-size: .56rem; }
+
+  /* Teammate's 3D watch concept, adapted to the dashboard's lavender and blush palette. */
+  .watch3d-wrap {
+    width: 150px;
+    height: 190px;
+    display: grid;
+    place-items: center;
+    perspective: 900px;
+  }
+  .watch3d {
+    position: relative;
+    width: 17em;
+    height: 21em;
+    font-size: 9px;
+    transform: scale(.52);
+    transform-style: preserve-3d;
+    animation: watch3d-float 5s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .watch3d-band {
+    position: absolute;
+    left: 50%;
+    width: 11em;
+    margin-left: -5.5em;
+    background: linear-gradient(90deg,#a99acb,#e6dced 50%,#b3a4d1);
+    border: 1px solid rgba(255,255,255,.35);
+  }
+  .watch3d-band-top {
+    bottom: 18em;
+    height: 10em;
+    border-radius: 2.2em 2.2em .4em .4em;
+    transform-origin: bottom;
+  }
+  .watch3d-band-bottom {
+    top: 18em;
+    height: 10em;
+    border-radius: .4em .4em 2.2em 2.2em;
+    transform-origin: top;
+  }
+  .watch3d-band-top::after,
+  .watch3d-band-bottom::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 2.6em;
+    width: .7em;
+    height: .7em;
+    margin-left: -.35em;
+    border-radius: 50%;
+    background: #82749f;
+    box-shadow: 0 1.5em 0 #82749f,0 3em 0 #82749f;
+  }
+  .watch3d-case {
+    position: absolute;
+    inset: 1.5em 0;
+    padding: .8em;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 4.2em;
+    background: linear-gradient(145deg,#fff8fc,#c9b8dc 48%,#f5dce8 78%,#a99acb);
+    box-shadow: 0 2.5em 5em rgba(55,42,83,.28),inset 0 0 0 .12em rgba(255,255,255,.58);
+  }
+  .watch3d-crown {
+    position: absolute;
+    z-index: 2;
+    right: -.7em;
+    top: 6.4em;
+    width: 1em;
+    height: 3em;
+    border-radius: .4em;
+    background: linear-gradient(90deg,#a18ebf,#f4e6f0);
+  }
+  .watch3d-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 3.5em;
+    color: #fff;
+    background: radial-gradient(circle at 50% 35%,#594d70,#29243d 76%);
+    box-shadow: inset 0 0 24px rgba(14,12,31,.3);
+  }
+  .watch3d-screen::after {
+    content: "";
+    position: absolute;
+    top: -34px;
+    right: -50px;
+    width: 130px;
+    height: 190px;
+    border-radius: 50%;
+    background: linear-gradient(110deg,transparent,rgba(255,255,255,.11),transparent);
+    transform: rotate(28deg);
+    pointer-events: none;
+  }
+  .watch3d-ring {
+    position: absolute;
+    inset: 1.2em 1.2em auto;
+    width: calc(100% - 2.4em);
+  }
+  .watch3d-ring circle { fill: none; stroke-width: 6; stroke-linecap: round; }
+  .watch3d-ring-track { stroke: rgba(255,255,255,.17); }
+  .watch3d-ring-arc {
+    stroke: #e6c6ef;
+    stroke-dasharray: 1;
+    stroke-dashoffset: .35;
+    transition: stroke-dashoffset .7s ease,stroke .4s ease;
+  }
+  .watch3d-heart {
+    position: absolute;
+    left: 50%;
+    top: 2.6em;
+    width: 1.3em;
+    margin-left: -.65em;
+    color: #f4b9d3;
+    animation: watch3d-heartbeat var(--beat,2.2s) ease-in-out infinite;
+  }
+  .watch3d .watch-readout { top: 4em; }
+  .watch3d .watch-label { color: rgba(255,255,255,.62); font: 500 .62em ui-monospace,monospace; letter-spacing: .14em; }
+  .watch3d .watch-number { font: 300 4em/1 Inter,"Segoe UI",sans-serif; }
+  .watch3d .watch-number small { font: 500 .22em ui-monospace,monospace; }
+  .watch3d .watch-state { color: #e8d6f2; font-size: .72em; }
+  .watch3d-ecg {
+    position: absolute;
+    left: 1.4em;
+    right: 1.4em;
+    bottom: 2em;
+    width: calc(100% - 2.8em);
+    height: 2.6em;
+  }
+  .watch3d-ecg path {
+    fill: none;
+    stroke: #f2b9d4;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 240;
+    animation: watch3d-ecg-draw 2.8s linear infinite;
+  }
+  .watch3d .watch-time { bottom: 1.1em; font: 500 .6em ui-monospace,monospace; }
+  .watch3d-buzz {
+    position: absolute;
+    inset: 1.5em 0;
+    border: .25em solid #f1a9c9;
+    border-radius: 4.2em;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .watch3d.is-alert { animation: watch3d-alert-shake .42s ease-in-out 1,watch3d-float 5s ease-in-out infinite .42s; }
+  .watch3d.is-alert .watch3d-ring-arc { stroke: #f2a9c7; }
+  .watch3d.is-alert .watch3d-buzz { animation: watch3d-buzz 1.2s ease-out infinite; }
+  .watch3d.is-alert .watch3d-buzz:nth-child(2) { animation-delay: .4s; }
+  @keyframes watch3d-float {
+    0%,100% { transform: scale(.64) translateY(0) rotateY(-5deg); }
+    50% { transform: scale(.64) translateY(-4px) rotateY(5deg); }
+  }
+  @keyframes watch3d-heartbeat {
+    0%,100% { transform: translateX(0) scale(1); opacity: .82; }
+    45% { transform: translateX(0) scale(1.18); opacity: 1; }
+  }
+  @keyframes watch3d-ecg-draw { from { stroke-dashoffset: 240; } to { stroke-dashoffset: 0; } }
+  @keyframes watch3d-alert-shake {
+    0%,100% { margin-left: 0; }
+    20% { margin-left: -4px; }
+    40% { margin-left: 4px; }
+    60% { margin-left: -3px; }
+    80% { margin-left: 3px; }
+  }
+  @keyframes watch3d-buzz {
+    0% { transform: scale(1); opacity: .55; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .watch3d,.watch3d-heart,.watch3d-ecg path,.watch3d-buzz { animation: none !important; }
+  }
   .insight-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px 24px; padding: 13px 18px; scroll-margin-top: 20px; }
   .insight-card h2 { margin: 0; font-size: .76rem; font-weight: 500; }
   .insight-card p { margin: 3px 0 0; color: rgba(255,255,255,.92); font-size: .89rem; }
@@ -673,7 +846,6 @@
               <h2>Overall Health</h2>
               <div class="health-percent" id="healthPercent" hidden><span id="healthPercentValue">0</span><small>%</small></div>
               <p id="overallHealthState">Awaiting sufficient data</p>
-              <p class="health-note" id="healthNote" hidden>Demo only: 100 minus mean absolute HR/HRV baseline percent change, bounded 0–100. Not a medical assessment.</p>
             </div>
           </div>
         </article>
@@ -732,17 +904,27 @@
             </div>
             <div class="watch-card-content">
               <div class="watch-mini" aria-hidden="true">
-                <div class="watch-device">
-                  <div class="watch-band top"></div><div class="watch-band bottom"></div><div class="watch-crown"></div>
-                  <div class="watch-case">
-                    <div class="watch-screen">
-                      <div class="watch-heart"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.7c0 4.1-8.8 10-8.8 10s-8.8-5.9-8.8-10A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.6Z" fill="currentColor"/></svg></div>
-                      <div class="watch-readout">
-                        <div class="watch-label" id="watchFaceLabel">LATEST EVENT</div>
-                        <div class="watch-number"><span id="watchFaceHr">--</span><small>BPM</small></div>
-                        <div class="watch-state" id="watchFaceState">Awaiting events</div>
+                <div class="watch3d-wrap">
+                  <div class="watch3d" id="watch3d">
+                    <div class="watch3d-band watch3d-band-top"></div>
+                    <div class="watch3d-band watch3d-band-bottom"></div>
+                    <div class="watch3d-buzz"></div>
+                    <div class="watch3d-case">
+                      <div class="watch3d-crown"></div>
+                      <div class="watch3d-screen">
+                        <svg class="watch3d-ring" viewBox="0 0 120 120" aria-hidden="true">
+                          <circle class="watch3d-ring-track" cx="60" cy="60" r="52"></circle>
+                          <circle class="watch3d-ring-arc" id="watchArc" cx="60" cy="60" r="52" transform="rotate(-90 60 60)" pathLength="1"></circle>
+                        </svg>
+                        <svg class="watch3d-heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"></path></svg>
+                        <div class="watch-readout">
+                          <div class="watch-label" id="watchFaceLabel">LATEST EVENT</div>
+                          <div class="watch-number"><span id="watchFaceHr">--</span><small>BPM</small></div>
+                          <div class="watch-state" id="watchFaceState">Awaiting events</div>
+                        </div>
+                        <svg class="watch3d-ecg" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path id="watchEcg" d="M0 20 L8 20 Q11 15 14 20 L20 20 L22 23 L26 3 L30 33 L33 20 L42 20 Q48 12 54 20 L66 20 L74 20 Q77 15 80 20 L86 20 L88 23 L92 3 L96 33 L99 20 L108 20 Q114 12 120 20 L132 20 L140 20 Q143 15 146 20 L152 20 L154 23 L158 3 L162 33 L165 20 L174 20 Q180 12 186 20 L200 20"></path></svg>
+                        <div class="watch-time" id="watchTime">AWAITING EVENTS</div>
                       </div>
-                      <div class="watch-time" id="watchTime">AWAITING EVENTS</div>
                     </div>
                   </div>
                 </div>
@@ -882,6 +1064,17 @@
 
   function setText(id, value) {
     document.getElementById(id).textContent = value;
+  }
+
+  function updateWatchVisual(hr, state) {
+    const arc = document.getElementById("watchArc");
+    const watch = document.getElementById("watch3d");
+    const value = Number(hr);
+    const hasHeartRate = Number.isFinite(value) && value > 0;
+    arc.style.strokeDashoffset = hasHeartRate
+      ? String(1 - Math.min(1, Math.max(0, value / 160)))
+      : "1";
+    watch.classList.toggle("is-alert", /elevated|low|alert/i.test(String(state || "")));
   }
 
   function renderDemoSleep() {
@@ -1268,8 +1461,9 @@
       setText("curTime", "No events");
       setText("watchFaceHr", "--");
       setText("watchFaceState", "Awaiting events");
+      updateWatchVisual(null, "");
       setText("watchTime", "AWAITING EVENTS");
-      document.querySelector(".watch-heart").style.removeProperty("--beat");
+      document.querySelector(".watch3d-heart").style.removeProperty("--beat");
       renderConnection(null);
       setText("insight", "Insights will appear when event data is available.");
       setText("insightState", "No current insight");
@@ -1293,11 +1487,12 @@
       setText("curTime", lastEventTime);
       setText("watchFaceHr", latest.hr == null ? "--" : latest.hr);
       setText("watchFaceState", state);
+      updateWatchVisual(latest.hr, state);
       setText("watchTime", lastEventTime.toUpperCase());
       setText("watchFaceLabel", demoMode ? "SAMPLE DATA" : "LATEST EVENT");
       // Same heartbeat glow as before, now paced to the displayed heart rate (clamped so it never strobes).
       const beat = Number(latest.hr) > 0 ? Math.min(1.6, Math.max(.45, 60 / Number(latest.hr))) : 2.2;
-      document.querySelector(".watch-heart").style.setProperty("--beat", beat.toFixed(2) + "s");
+      document.querySelector(".watch3d-heart").style.setProperty("--beat", beat.toFixed(2) + "s");
       renderConnection(latest);
       setText("insight", INSIGHTS[latest.state] || "");
       setText("insightState", INSIGHTS[latest.state] ? state + (demoMode ? " sample" : " event") : "No current insight");
@@ -1404,9 +1599,8 @@
     function describe() {
       const available = target !== null;
       document.getElementById("healthPercent").hidden = !available;
-      document.getElementById("healthNote").hidden = !demoMode;
       setText("overallHealthState", available
-        ? demoMode ? "Illustrative demo indicator" : "Health score"
+        ? ""
         : demoMode ? "Awaiting demo readings" : "Awaiting sufficient data");
       document.getElementById("wreathSvg").setAttribute("aria-label",
         available
