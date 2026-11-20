@@ -141,12 +141,24 @@ def build_channels(board_port):
 def watch_writer(port, chans, state):
     """Optional: one line per second to the ESP32 watch over USB serial: W,<patient>,<bpm>,<state>"""
     import serial
-    ser = serial.Serial(port, 115200, timeout=0.5)
+    ser = None
     while True:
-        key = state["watch_patient"]
-        d = chans[key].get()
-        bpm = int(round(d["hs"])) if d.get("valid") and d.get("hs") is not None else 0
-        ser.write(f"W,{key},{bpm},{d.get('state', 'waiting')}\n".encode())
+        try:
+            if ser is None:
+                ser = serial.Serial(port, 115200, timeout=0.5)
+                print(f"Watch: sending to {port}")
+            key = state["watch_patient"]
+            d = chans[key].get()
+            bpm = int(round(d["hs"])) if d.get("valid") and d.get("hs") is not None else 0
+            ser.write(f"W,{key},{bpm},{d.get('state', 'waiting')}\n".encode())
+        except Exception as e:  # watch is optional: report and retry, never stop the bridge
+            print(f"Watch on {port}: {e}. Retrying in 3 s (close the Arduino Serial Monitor).")
+            try:
+                ser.close()
+            except Exception:
+                pass
+            ser = None
+            time.sleep(2.0)
         time.sleep(1.0)
 
 
