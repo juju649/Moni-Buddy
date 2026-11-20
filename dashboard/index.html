@@ -288,6 +288,27 @@
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
   }
+  /* ---- Live Monitor (CardioTwin bridge) ---- */
+  .sidebar .live-toggle { margin-top: 8px; }
+  .live-toggle[aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+  .login-live { margin-top: 12px; width: 100%; }
+  .live-panel { display: grid; gap: 14px; padding: 16px 18px; }
+  .live-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .live-head h2 { margin: 0; font-size: 1.05rem; }
+  .live-source { display: inline-block; margin-top: 3px; font-size: .78rem; opacity: .8; letter-spacing: .02em; }
+  .live-switch { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.18); }
+  .live-switch button { border: 0; border-radius: 999px; padding: 6px 13px; font: inherit; font-size: .82rem; color: inherit; background: transparent; cursor: pointer; }
+  .live-switch button[aria-pressed="true"] { background: rgba(255,255,255,.78); color: #4a3f6b; font-weight: 600; }
+  .live-stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 10px; }
+  .live-stat { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.14); }
+  .live-stat > span { font-size: .75rem; opacity: .75; }
+  .live-stat strong { font-size: 1.35rem; font-weight: 600; }
+  .live-stat small { font-size: .74rem; opacity: .75; }
+  .live-charts { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 12px; }
+  .live-chart h3 { margin: 0 0 6px; font-size: .82rem; font-weight: 600; opacity: .85; }
+  .live-chartbox { position: relative; height: 160px; }
+  .live-note { margin: 0; font-size: .74rem; opacity: .7; }
+  body[data-live-alert="on"] .live-panel { box-shadow: 0 0 0 2px rgba(255,200,215,.85),0 12px 28px rgba(117,71,91,.18); }
   #alert {
     display: flex;
     align-items: center;
@@ -911,6 +932,7 @@
       <button class="login-profile" type="button" data-demo-patient="hamantha">Healthy Hamantha</button>
       <button class="login-profile" type="button" data-demo-patient="sam">Sickly Sam</button>
     </div>
+    <button class="login-submit login-live" id="loginLiveButton" type="button">Open Live Monitor (CardioTwin)</button>
   </div>
 </section>
 
@@ -932,6 +954,9 @@
           </g>
           <circle class="demo-flower-center" cx="12" cy="12" r="2.2"/>
         </svg>
+      </button>
+      <button class="demo-toggle live-toggle" id="liveToggle" type="button" aria-label="Turn on Live Monitor (CardioTwin recording replay)" aria-pressed="false" title="Live Monitor">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2.5-5H21" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
   </aside>
@@ -990,6 +1015,30 @@
         <button class="ack" id="ackBtn" type="button">Acknowledge</button>
       </section>
       <div id="ackNote" class="glass-card" role="status" hidden></div>
+
+      <section id="livePanel" class="live-panel glass-card" aria-labelledby="liveHeading" hidden>
+        <div class="live-head">
+          <div>
+            <h2 id="liveHeading">Live Monitor</h2>
+            <span class="live-source" id="liveSource">Connecting to the CardioTwin bridge…</span>
+          </div>
+          <div class="live-switch" role="group" aria-label="Choose patient">
+            <button type="button" data-live-patient="hamantha" aria-pressed="true">Healthy Hamantha</button>
+            <button type="button" data-live-patient="sam" aria-pressed="false">Sickly Sam</button>
+          </div>
+        </div>
+        <div class="live-stats">
+          <div class="live-stat"><span>Heart rate</span><strong><span id="liveHr">--</span> <small>BPM</small></strong><small id="liveState">--</small></div>
+          <div class="live-stat"><span>HRV (RMSSD)</span><strong><span id="liveRm">--</span> <small>ms</small></strong><small>beat-to-beat variation</small></div>
+          <div class="live-stat"><span>Signal quality</span><strong id="liveSqi">--</strong><small id="liveLab">--</small></div>
+          <div class="live-stat"><span>Baseline</span><strong id="liveBaseline">--</strong><small id="liveBaselineNote">--</small></div>
+        </div>
+        <div class="live-charts">
+          <div class="live-chart"><h3>Heart rate</h3><div class="live-chartbox"><canvas id="liveHrChart" role="img" aria-label="Heart rate over time"></canvas></div></div>
+          <div class="live-chart"><h3>ECG · last 5 seconds</h3><div class="live-chartbox"><canvas id="liveEcgChart" role="img" aria-label="ECG waveform"></canvas></div></div>
+        </div>
+        <p class="live-note">Values come from a recording, not live sensor data. They stay in this browser and are never sent to FastAPI or Supabase. Not a medical device.</p>
+      </section>
 
       <section id="general" class="overview-layout" aria-label="General dashboard">
         <article class="floral-panel glass-card">
@@ -1280,6 +1329,27 @@
   let events = liveEvents;
   let chart;
 
+  // ---- Live Monitor: values from CardioTwin's live_bridge.py (a RECORDING replayed on the SK-AM62B or this laptop).
+  // These readings stay in the browser. They are never posted to FastAPI or Supabase.
+  const LIVE_BRIDGE = (window.MONIBUDDY_LIVE_BRIDGE || "http://127.0.0.1:8001").replace(/\/$/, "");
+  const LIVE_PATIENTS = { hamantha: "Healthy Hamantha", sam: "Sickly Sam" };
+  const LIVE_EVENT_EVERY_MS = 5000;
+  const LIVE_EVENT_LIMIT = 40;
+  const LIVE_HR_LIMIT = 90;
+  let liveMode = false;
+  let livePatient = "hamantha";
+  let liveTimer = null;
+  let liveMonEvents = [];
+  let liveHrSeries = [];
+  let liveLast = null;
+  let liveLastSeq = null;
+  let liveLastState = null;
+  let liveLastEventMs = 0;
+  let liveAcked = false;
+  let liveBridgeOk = null;
+  let liveHrChart = null;
+  let liveEcgChart = null;
+
   const API_BASE = (window.MONIBUDDY_API_BASE || "http://127.0.0.1:8000").replace(/\/$/, "");
   let backendState = "unknown"; // unknown | online | offline (reachability of FastAPI only, not of the watch)
 
@@ -1358,7 +1428,7 @@
   const clock = seconds => Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
   const formatDuration = minutes => Math.floor(minutes / 60) + "h " + String(minutes % 60).padStart(2, "0") + "m";
   // Demo events show their position in the sample recording instead of a wall-clock time.
-  const eventTime = event => event.sample ? clock(event.sample.endSec) : event.simulated ? fmtTimeSeconds(event.timestamp) : fmtTime(event.timestamp);
+  const eventTime = event => event.sample ? clock(event.sample.endSec) : (event.simulated || event.live) ? fmtTimeSeconds(event.timestamp) : fmtTime(event.timestamp);
   const eventDateTime = event => event.sample ? "Sample " + clock(event.sample.startSec) + "\u2013" + clock(event.sample.endSec) : fmtDateTime(event.timestamp);
   const stateName = state => STATE_NAMES[state] || state || "Unknown";
   const riskLevel = risk => risk < .4 ? ["Low", "low"] : risk < .7 ? ["Moderate", "mod"] : ["High", "high"];
@@ -1484,10 +1554,11 @@
 
   function setDemoMode(active, reset = false) {
     if (demoMode === active && !reset) return;
+    if (active && liveMode) stopLiveMode({ silent: true });
     stopDemoStream();
     demoMode = active;
     demoEvents = demoMode ? createDemoEvents() : [];
-    events = demoMode ? demoEvents : currentDemoPatient ? [] : liveEvents;
+    events = demoMode ? demoEvents : liveMode ? liveMonEvents : currentDemoPatient ? [] : liveEvents;
     const toggle = document.getElementById("demoToggle");
     toggle.setAttribute("aria-pressed", String(demoMode));
     toggle.setAttribute("aria-label", demoMode ? "Turn off Demo Mode and return to real data" : "Turn on Demo Mode (sample data)");
@@ -1511,6 +1582,11 @@
   function selectDemoPatient(patientKey) {
     const patient = DEMO_PATIENTS[patientKey];
     if (!patient) return;
+    // In Live Monitor the same patient names switch the bridge recording instead of the browser demo.
+    if (liveMode) {
+      setLivePatient(patientKey);
+      return;
+    }
     currentDemoPatient = patient;
     currentAccountName = patient.name;
     setText("patientId", patient.name);
@@ -1547,6 +1623,7 @@
   }
 
   function openLoginScreen() {
+    stopLiveMode({ silent: true });
     stopDemoStream();
     if (demoMode) {
       setDemoMode(false);
@@ -1571,6 +1648,7 @@
   }
 
   function showDashboardAccount(name, isAdmin) {
+    stopLiveMode({ silent: true });
     currentDemoPatient = null;
     currentAccountName = name;
     document.getElementById("patientKind").hidden = true;
@@ -1770,7 +1848,8 @@
       return;
     }
     setText("alertHeading", "Alert needs your attention");
-    setText("alertText", stateName(pending.state) + " at " + eventTime(pending) + " (" + pending.hr + " bpm).");
+    setText("alertText", stateName(pending.state) + " at " + eventTime(pending) + " (" + pending.hr + " bpm)." +
+      (pending.live ? " " + pending.patientName + " · " + pending.liveSource + "." : ""));
     banner.dataset.id = pending.event_id;
     banner.hidden = false;
   }
@@ -1893,7 +1972,11 @@
   function renderConnection(latest) {
     const dots = [document.getElementById("syncDot"), document.querySelector(".connection .sync-dot")];
     let state = "idle", text, detail;
-    if (demoMode) {
+    if (liveMode) {
+      state = liveBridgeOk ? "online" : liveBridgeOk === false ? "offline" : "idle";
+      text = liveBridgeOk === false ? "Live bridge unreachable" : "Live Monitor";
+      detail = liveBridgeOk === false ? "Start live_bridge.py" : liveLast && liveLast.source ? liveLast.source : "Connecting";
+    } else if (demoMode) {
       text = "Watch not connected";
       detail = "Sample data only";
     } else if (currentDemoPatient) {
@@ -1979,6 +2062,7 @@
     renderHeartRateLine(animate);
     renderTimeline();
     renderRiskChart(animate);
+    if (liveMode) renderLivePanel();
   }
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -2011,6 +2095,16 @@
       if (!event) return;
       event.acknowledged_by = "Maryam";
       event.acknowledged_at = new Date().toISOString();
+      if (liveMode) {
+        // One acknowledgement covers the whole alert episode, until the reading returns to normal.
+        liveAcked = true;
+        liveMonEvents.forEach(item => {
+          if (Number(item.risk) >= .7 && !item.acknowledged_at) {
+            item.acknowledged_by = event.acknowledged_by;
+            item.acknowledged_at = event.acknowledged_at;
+          }
+        });
+      }
       const note = document.getElementById("ackNote");
       note.textContent = "Acknowledged at " + fmtTime(event.acknowledged_at) + ".";
       note.hidden = false;
@@ -2193,16 +2287,248 @@
     }
   }
 
+  // ---- Live Monitor ------------------------------------------------------------------------------
+  function startLiveMode(patientKey) {
+    if (demoMode) setDemoMode(false);
+    currentDemoPatient = null;
+    liveMode = true;
+    document.body.dataset.live = "on";
+    document.getElementById("demoLogin").hidden = true;
+    document.getElementById("dashboardShell").inert = false;
+    document.getElementById("livePanel").hidden = false;
+    const toggle = document.getElementById("liveToggle");
+    toggle.setAttribute("aria-pressed", "true");
+    toggle.setAttribute("aria-label", "Turn off Live Monitor");
+    if (liveTimer === null) liveTimer = setInterval(pollLive, 1000);
+    setLivePatient(patientKey || livePatient);
+  }
+
+  function stopLiveMode({ silent = false } = {}) {
+    if (!liveMode) return;
+    liveMode = false;
+    if (liveTimer !== null) clearInterval(liveTimer);
+    liveTimer = null;
+    document.body.dataset.live = "off";
+    document.body.dataset.liveAlert = "off";
+    document.getElementById("livePanel").hidden = true;
+    const toggle = document.getElementById("liveToggle");
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.setAttribute("aria-label", "Turn on Live Monitor (CardioTwin recording replay)");
+    liveMonEvents = [];
+    liveHrSeries = [];
+    liveLast = null;
+    events = liveEvents;
+    document.getElementById("ackNote").hidden = true;
+    if (!silent) {
+      if (!adminAuthenticated) {
+        openLoginScreen();
+        return;
+      }
+      currentAccountName = "Admin";
+      setText("patientId", "Admin");
+      updateAccountMenu();
+      document.title = "Moni-Buddy Dashboard";
+      Health.set(null, { immediate: true });
+      render();
+    }
+  }
+
+  function setLivePatient(patientKey) {
+    livePatient = LIVE_PATIENTS[patientKey] ? patientKey : "hamantha";
+    liveMonEvents = [];
+    liveHrSeries = [];
+    liveLast = null;
+    liveLastSeq = null;
+    liveLastState = null;
+    liveLastEventMs = 0;
+    liveAcked = false;
+    events = liveMonEvents;
+    currentAccountName = LIVE_PATIENTS[livePatient];
+    setText("patientId", currentAccountName);
+    document.getElementById("patientKind").hidden = true;
+    updateAccountMenu();
+    document.querySelectorAll("[data-live-patient]").forEach(button => {
+      button.setAttribute("aria-pressed", String(button.dataset.livePatient === livePatient));
+    });
+    document.getElementById("ackNote").hidden = true;
+    document.title = "Moni-Buddy Dashboard (Live Monitor · " + currentAccountName + ")";
+    Health.set(null, { immediate: true });
+    render();
+    pollLive();
+  }
+
+  async function pollLive() {
+    if (!liveMode) return;
+    const patient = livePatient;
+    try {
+      const response = await fetch(LIVE_BRIDGE + "/live?patient=" + encodeURIComponent(patient), { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const reading = await response.json();
+      if (!liveMode || patient !== livePatient) return;
+      liveBridgeOk = true;
+      ingestLiveReading(reading, patient);
+    } catch (error) {
+      if (!liveMode) return;
+      liveBridgeOk = false;
+      renderConnection(events[events.length - 1] || null);
+      renderLivePanel();
+    }
+  }
+
+  function ingestLiveReading(reading, patient) {
+    liveLast = reading;
+    const fresh = reading.valid && reading.seq !== liveLastSeq;
+    if (fresh) {
+      liveLastSeq = reading.seq;
+      liveHrSeries.push({ time: reading.timestamp, hr: Number(reading.hs) });
+      if (liveHrSeries.length > LIVE_HR_LIMIT) liveHrSeries.shift();
+    }
+    if (!reading.alert) liveAcked = false;
+    const now = Date.now();
+    if (fresh && (reading.state !== liveLastState || now - liveLastEventMs >= LIVE_EVENT_EVERY_MS)) {
+      liveLastEventMs = now;
+      liveLastState = reading.state;
+      const baseline = reading.baseline || {};
+      const measurements = {};
+      if (Number(baseline.heartRate) > 0) measurements.heartRate = trendComparison(Number(reading.hs), Number(baseline.heartRate));
+      if (Number(baseline.hrv) > 0 && Number.isFinite(Number(reading.rm))) measurements.hrv = trendComparison(Number(reading.rm), Number(baseline.hrv));
+      const event = {
+        event_id: "live-" + patient + "-" + reading.seq,
+        patient_id: "live-" + patient,
+        patientName: LIVE_PATIENTS[patient],
+        state: reading.state,
+        risk: reading.risk,
+        hr: Math.round(Number(reading.hs)),
+        timestamp: new Date().toISOString(),
+        personalBaseline: {
+          heartRate: Number(baseline.heartRate) > 0 ? Number(baseline.heartRate) : undefined,
+          hrv: Number(baseline.hrv) > 0 ? Number(baseline.hrv) : undefined,
+          spo2: null
+        },
+        live: true,
+        liveSource: reading.source
+      };
+      if (Object.keys(measurements).length) event.trendAnalysis = { status: "success", measurements };
+      if (reading.alert && liveAcked) {
+        event.acknowledged_by = "Maryam";
+        event.acknowledged_at = new Date().toISOString();
+      }
+      liveMonEvents.push(event);
+      if (liveMonEvents.length > LIVE_EVENT_LIMIT) liveMonEvents.shift();
+      render({ animate: true });
+    } else {
+      renderLivePanel();
+      renderConnection(events[events.length - 1] || null);
+    }
+  }
+
+  function renderLivePanel() {
+    if (!liveMode) return;
+    const reading = liveLast;
+    const valid = reading && reading.valid;
+    if (liveBridgeOk === false) {
+      setText("liveSource", "Bridge not reachable at " + LIVE_BRIDGE + ". Start: python live_bridge.py");
+    } else if (!reading) {
+      setText("liveSource", "Connecting to the CardioTwin bridge…");
+    } else {
+      setText("liveSource", "Source: " + (reading.source || "recording replay") + (reading.file ? " · " + reading.file : ""));
+    }
+    setText("liveHr", valid ? Math.round(Number(reading.hs)) : "--");
+    setText("liveState", valid ? stateName(reading.state) : reading && reading.message ? reading.message : "Waiting for a reliable window");
+    setText("liveRm", valid && reading.rm != null ? Number(reading.rm).toFixed(1) : "--");
+    setText("liveSqi", reading && reading.sqi != null ? Math.round(Number(reading.sqi)) + " / 100" : "--");
+    setText("liveLab", reading && reading.lab ? reading.lab + (reading.rej ? " · " + reading.rej + " beats ignored" : "") : "--");
+    const baseline = reading && reading.baseline;
+    if (baseline && Number(baseline.heartRate) > 0) {
+      setText("liveBaseline", Math.round(Number(baseline.heartRate)) + " BPM");
+      setText("liveBaselineNote", baseline.hrv ? "HRV " + Number(baseline.hrv).toFixed(1) + " ms · settled" : "settled");
+    } else {
+      setText("liveBaseline", "Learning");
+      setText("liveBaselineNote", baseline ? baseline.good_windows + " of " + baseline.needed + " good windows" : "--");
+    }
+
+    // The watch card mirrors the newest reading every second (events are only logged every few seconds).
+    document.body.dataset.liveAlert = reading && reading.alert ? "on" : "off";
+    setText("watchFaceLabel", "RECORDING REPLAY");
+    if (valid) {
+      const hr = Math.round(Number(reading.hs));
+      setText("curHr", hr);
+      setText("watchFaceHr", hr);
+      setText("watchFaceState", stateName(reading.state));
+      setText("curState", stateName(reading.state));
+      updateWatchVisual(hr, stateName(reading.state));
+      document.querySelector(".watch3d-heart").style.setProperty("--beat", Math.min(1.6, Math.max(.45, 60 / hr)).toFixed(2) + "s");
+    }
+    renderLiveCharts(reading);
+  }
+
+  function renderLiveCharts(reading) {
+    if (typeof Chart === "undefined") return;
+    const axis = { color: "rgba(255,255,255,.65)", font: { size: 9 } };
+    if (!liveHrChart) {
+      liveHrChart = new Chart(document.getElementById("liveHrChart").getContext("2d"), {
+        type: "line",
+        data: { labels: [], datasets: [
+          { data: [], borderColor: "rgba(255,255,255,.95)", borderWidth: 1.6, pointRadius: 0, tension: .35 },
+          { data: [], borderColor: "rgba(255,200,215,.9)", borderWidth: 1, borderDash: [4, 4], pointRadius: 0 }
+        ] },
+        options: {
+          maintainAspectRatio: false, animation: false,
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { ...axis, maxTicksLimit: 5 } },
+            y: { grid: { color: "rgba(255,255,255,.12)" }, border: { display: false }, ticks: { ...axis, maxTicksLimit: 4 } }
+          },
+          plugins: { legend: { display: false }, tooltip: { enabled: true } }
+        }
+      });
+    }
+    if (!liveEcgChart) {
+      liveEcgChart = new Chart(document.getElementById("liveEcgChart").getContext("2d"), {
+        type: "line",
+        data: { labels: [], datasets: [{ data: [], borderColor: "rgba(255,255,255,.95)", borderWidth: 1.2, pointRadius: 0, tension: 0, spanGaps: false }] },
+        options: {
+          maintainAspectRatio: false, animation: false,
+          scales: { x: { display: false }, y: { display: false } },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+      });
+    }
+    const baselineHr = reading && reading.baseline && Number(reading.baseline.heartRate) > 0 ? Number(reading.baseline.heartRate) : null;
+    liveHrChart.data.labels = liveHrSeries.map(point => fmtTimeSeconds(point.time));
+    liveHrChart.data.datasets[0].data = liveHrSeries.map(point => point.hr);
+    liveHrChart.data.datasets[1].data = liveHrSeries.map(() => baselineHr);
+    liveHrChart.update("none");
+    const ecg = reading && Array.isArray(reading.ecg) ? reading.ecg : [];
+    liveEcgChart.data.labels = ecg.map((_, index) => index);
+    liveEcgChart.data.datasets[0].data = ecg;
+    liveEcgChart.update("none");
+  }
+
+  function bindLiveMonitor() {
+    document.getElementById("liveToggle").addEventListener("click", () => {
+      if (liveMode) stopLiveMode();
+      else startLiveMode();
+    });
+    document.getElementById("loginLiveButton").addEventListener("click", () => startLiveMode());
+    document.querySelectorAll("[data-live-patient]").forEach(button => {
+      button.addEventListener("click", () => setLivePatient(button.dataset.livePatient));
+    });
+  }
+
   bindNavigation();
   bindAcknowledgement();
   bindPatientAuth();
   bindDemoToggle();
+  bindLiveMonitor();
   bindFloralInteraction();
   Health.set(null, { immediate: true });
   render();
   checkBackend();
   setInterval(checkBackend, 15000);
   document.getElementById("loginUsername").focus();
+  // Shortcut for the demo: index.html?live=hamantha or ?live=sam opens the Live Monitor directly.
+  const liveParam = new URLSearchParams(location.search).get("live");
+  if (liveParam !== null) startLiveMode(LIVE_PATIENTS[liveParam] ? liveParam : "hamantha");
 </script>
 </body>
 </html>
