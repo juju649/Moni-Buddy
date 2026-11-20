@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moni-Buddy Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="demoEstimates.js"></script>
 <style>
   :root {
     --page: #f2f0f7;
@@ -771,6 +772,33 @@
     white-space: nowrap;
   }
   body[data-demo="on"] .sample-chip { display: inline-flex; }
+  /* Live Monitor badges: real replay values vs estimated demo values */
+  .live-chip,.est-chip {
+    display: none;
+    align-items: center;
+    margin-left: 7px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    color: #fff;
+    font-size: .5rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .live-chip { border: 1px solid rgba(200,242,223,.75); background: rgba(200,242,223,.2); }
+  .est-chip { border: 1px solid rgba(255,236,196,.7); background: rgba(255,226,170,.2); color: #fff3d4; }
+  body[data-live="on"] .live-chip,body[data-live="on"] .est-chip { display: inline-flex; }
+  .flower-center .est-chip { margin: 3px auto 0; }
+  .recovery-est { display: grid; gap: 6px; margin-top: 6px; }
+  .recovery-label { font-size: .72rem; opacity: .85; }
+  .recovery-gauge { height: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.12); }
+  .recovery-gauge span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,rgba(219,214,255,.9),rgba(246,205,225,.9)); transition: width .8s ease; }
+  .sleep-stages { display: grid; gap: 3px; }
+  .sleep-stage-bar { display: flex; height: 8px; overflow: hidden; border-radius: 999px; border: 1px solid rgba(255,255,255,.24); }
+  .sleep-stage-bar span { height: 100%; }
+  .sleep-stage-legend { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: .52rem; }
+  .sleep-stage-legend i { display: inline-block; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%; }
   .glass-card { transition: box-shadow .5s ease,background .2s ease,transform .2s ease; }
   @keyframes heart-glow {
     0%,100% { transform: translateX(-50%) scale(1); opacity: .85; }
@@ -1019,7 +1047,7 @@
       <section id="livePanel" class="live-panel glass-card" aria-labelledby="liveHeading" hidden>
         <div class="live-head">
           <div>
-            <h2 id="liveHeading">Live Monitor</h2>
+            <h2 id="liveHeading">Live Monitor<span class="live-chip">Live: recording replay</span></h2>
             <span class="live-source" id="liveSource">Connecting to the CardioTwin bridge…</span>
           </div>
           <div class="live-switch" role="group" aria-label="Choose patient">
@@ -1067,7 +1095,7 @@
               </g>
             </svg>
             <div class="flower-center">
-              <h2>Overall Health</h2>
+              <h2>Overall Health<span class="est-chip">Estimated</span></h2>
               <div class="health-percent" id="healthPercent" hidden><span id="healthPercentValue">0</span><small>%</small></div>
               <p id="overallHealthState">Awaiting sufficient data</p>
             </div>
@@ -1077,7 +1105,7 @@
         <section class="metrics-grid" aria-label="Health and device metrics">
           <article id="heartRateCard" class="metric-card glass-card">
             <div class="metric-head">
-              <h2>Heart Rate<span class="sample-chip">SAMPLE DATA</span></h2>
+              <h2>Heart Rate<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2>
               <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-5 4 10 2.5-5H21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </div>
             <div class="metric-value"><span id="curHr">--</span><small>BPM</small></div>
@@ -1092,7 +1120,7 @@
 
           <article id="sleepCard" class="metric-card glass-card">
             <div class="metric-head">
-              <h2>Sleep<span class="sample-chip">DEMO ESTIMATE</span></h2>
+              <h2>Sleep<span class="sample-chip">DEMO ESTIMATE</span><span class="est-chip">Estimated</span></h2>
               <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19.5 15.5A8.5 8.5 0 0 1 8.5 4.5a8.6 8.6 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
             </div>
             <div class="status-word" id="sleepUnavailable">Unavailable</div>
@@ -1108,22 +1136,32 @@
                 <div class="sleep-track"><span class="sleep-window"></span></div>
                 <div class="sleep-axis"><span id="sleepStartLabel">--</span><span id="sleepEndLabel">--</span></div>
               </div>
+              <div class="sleep-stages" id="sleepStages" hidden>
+                <div class="sleep-stage-bar" id="sleepStageBar" role="img" aria-label="Estimated sleep stages"></div>
+                <div class="sleep-stage-legend" id="sleepStageLegend"></div>
+              </div>
               <p class="sleep-caveat">Illustrative demo estimate only. ECG/PPG alone does not confirm sleep duration.</p>
             </div>
           </article>
 
           <article id="recoveryCard" class="metric-card glass-card">
             <div class="metric-head">
-              <h2>Recovery</h2>
+              <h2>Recovery<span class="est-chip">Estimated</span></h2>
               <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.2-8.8C1.1 7.8 3.2 4 6.8 4c2 0 3.8 1.2 5.2 3.1C13.4 5.2 15.2 4 17.2 4c3.6 0 5.7 3.8 4 7.2C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
             </div>
-            <div class="status-word">Unavailable</div>
-            <div class="metric-empty">No recovery calculation available</div>
+            <div class="status-word" id="recoveryUnavailable">Unavailable</div>
+            <div class="metric-empty" id="recoveryUnavailableNote">No recovery calculation available</div>
+            <div class="recovery-est" id="recoveryEst" hidden>
+              <div class="metric-value"><span id="recoveryPercent">--</span><small>%</small></div>
+              <div class="recovery-label" id="recoveryLabel">--</div>
+              <div class="recovery-gauge" role="img" id="recoveryGauge" aria-label="Estimated recovery"><span id="recoveryFill"></span></div>
+              <p class="sleep-caveat">Illustrative estimate. Not measured.</p>
+            </div>
           </article>
 
           <article id="watchCard" class="metric-card watch-card glass-card">
             <div class="metric-head">
-              <h2>Watch Status<span class="sample-chip">SAMPLE DATA</span></h2>
+              <h2>Watch Status<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2>
               <button class="metric-icon watch-egg-trigger" id="watchEggTrigger" type="button" aria-label="Open the hidden watch animation" title="Open the hidden watch animation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="6" width="14" height="12" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 3h8v3H8zm0 15h8v3H8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
             </div>
             <div class="watch-card-content">
@@ -1165,7 +1203,7 @@
 
       <section id="insights" class="insight-card glass-card" aria-labelledby="insightHeading">
         <div>
-          <h2 id="insightHeading">Insights<span class="sample-chip">SAMPLE DATA</span></h2>
+          <h2 id="insightHeading">Insights<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2>
           <p id="insight">Insights will appear when event data is available.</p>
         </div>
         <span class="insight-state" id="insightState">No current insight</span>
@@ -1173,7 +1211,7 @@
 
       <section id="detailGrid" class="detail-grid" aria-label="Personal baseline and trend details" hidden>
         <article id="baselineCard" class="detail-card glass-card" hidden>
-          <h2>Personal baseline<span class="sample-chip">SAMPLE DATA</span></h2>
+          <h2>Personal baseline<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span><span class="est-chip">SpO2 Estimated</span></h2>
           <div class="baseline-list">
             <div class="baseline-item"><span>Heart rate</span><strong id="baselineHr">--</strong></div>
             <div class="baseline-item"><span>HRV</span><strong id="baselineHrv">--</strong></div>
@@ -1181,18 +1219,18 @@
           </div>
         </article>
         <article id="trendCard" class="detail-card glass-card" hidden>
-          <h2>Trend comparison<span class="sample-chip">SAMPLE DATA</span></h2>
+          <h2>Trend comparison<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2>
           <div class="trend-list" id="trendRows"></div>
         </article>
       </section>
 
       <section id="history" class="bottom-grid" aria-label="Event history">
         <article class="bottom-card glass-card">
-          <div class="section-heading"><h2>Event Timeline<span class="sample-chip">SAMPLE DATA</span></h2><span id="eventCount">0 events</span></div>
+          <div class="section-heading"><h2>Event Timeline<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2><span id="eventCount">0 events</span></div>
           <ul class="timeline" id="timeline" aria-live="polite"></ul>
         </article>
         <article class="bottom-card glass-card">
-          <div class="section-heading"><h2>Risk Trend<span class="sample-chip">SAMPLE DATA</span></h2><span id="riskSummary">Event risk score</span></div>
+          <div class="section-heading"><h2>Risk Trend<span class="sample-chip">SAMPLE DATA</span><span class="live-chip">Live: recording replay</span></h2><span id="riskSummary">Event risk score</span></div>
           <div class="chartbox">
             <canvas id="riskChart" role="img" aria-label="Risk score over time"></canvas>
             <div class="chart-empty" id="chartEmpty">No risk events to plot</div>
@@ -1210,6 +1248,7 @@
                 style="width:100%;height:900px;border:0;border-radius:12px;background:#fff"></iframe>
         <p style="font-size:.85rem;opacity:.75;margin:8px 0 0">Runs from the CardioTwin app. If this is blank, start it with: python -m streamlit run dashboard.py</p>
       </section>
+      <footer class="live-note" id="estimatesFooter" style="text-align:center" hidden>Cards marked Estimated are illustrative and not measured. Moni-Buddy is a prototype and not a medical device.</footer>
     </main>
   </div>
 </div>
@@ -1456,16 +1495,116 @@
   }
 
   function renderDemoSleep() {
-    const active = demoMode;
+    const estimate = liveEstimate();
+    const session = estimate ? {
+      bedtime: estimate.sleep.bedtime,
+      wakeTime: estimate.sleep.wakeTime,
+      timeInBedMinutes: estimate.sleep.timeInBedMinutes,
+      estimatedSleepMinutes: estimate.sleep.sleepMinutes
+    } : DEMO_SLEEP_SESSION;
+    const active = demoMode || !!estimate;
     document.getElementById("sleepDemo").hidden = !active;
     document.getElementById("sleepUnavailable").hidden = active;
     document.getElementById("sleepUnavailableNote").hidden = active;
-    setText("sleepBedtime", active ? DEMO_SLEEP_SESSION.bedtime : "--");
-    setText("sleepWakeTime", active ? DEMO_SLEEP_SESSION.wakeTime : "--");
-    setText("sleepStartLabel", active ? DEMO_SLEEP_SESSION.bedtime : "--");
-    setText("sleepEndLabel", active ? DEMO_SLEEP_SESSION.wakeTime : "--");
-    setText("sleepTimeInBed", active ? formatDuration(DEMO_SLEEP_SESSION.timeInBedMinutes) : "--");
-    setText("sleepDuration", active ? formatDuration(DEMO_SLEEP_SESSION.estimatedSleepMinutes) : "--");
+    setText("sleepBedtime", active ? session.bedtime : "--");
+    setText("sleepWakeTime", active ? session.wakeTime : "--");
+    setText("sleepStartLabel", active ? session.bedtime : "--");
+    setText("sleepEndLabel", active ? session.wakeTime : "--");
+    setText("sleepTimeInBed", active ? formatDuration(session.timeInBedMinutes) : "--");
+    setText("sleepDuration", active ? formatDuration(session.estimatedSleepMinutes) + (estimate && estimate.sleep.broken ? " · broken" : "") : "--");
+    renderSleepStages(estimate);
+  }
+
+  // ---- Estimated demo values (dashboard/demoEstimates.js), used only in the Live Monitor --------------
+  const SLEEP_STAGE_COLORS = { Deep: "rgba(178,165,240,.95)", Light: "rgba(219,214,255,.9)", REM: "rgba(246,205,225,.9)", Awake: "rgba(255,226,190,.9)" };
+
+  function liveEstimate() {
+    const all = window.MONIBUDDY_ESTIMATES;
+    return liveMode && all && all.patients ? all.patients[livePatient] || null : null;
+  }
+
+  // Slow sine drift (no random jumps) so estimates look alive.
+  function estimateDrift(amplitude, phase = 0) {
+    const all = window.MONIBUDDY_ESTIMATES || {};
+    const period = (all.drift && all.drift.periodSeconds) || 90;
+    return amplitude * Math.sin(2 * Math.PI * (Date.now() / 1000 / period) + phase);
+  }
+
+  function estimatedSpo2() {
+    const estimate = liveEstimate();
+    if (!estimate) return null;
+    const drift = (window.MONIBUDDY_ESTIMATES.drift || {}).spo2 || 0;
+    return Math.round((estimate.spo2 + estimateDrift(drift, 1.3)) * 10) / 10;
+  }
+
+  function estimatedRecovery() {
+    const estimate = liveEstimate();
+    if (!estimate) return null;
+    const drift = (window.MONIBUDDY_ESTIMATES.drift || {}).recovery || 0;
+    return Math.max(0, Math.min(100, Math.round(estimate.recovery.percent + estimateDrift(drift, .4))));
+  }
+
+  // Overall Health = live heart rate, HRV and state + estimated sleep and recovery (weights in demoEstimates.js).
+  function estimatedHealthScore(reading) {
+    const all = window.MONIBUDDY_ESTIMATES;
+    const estimate = liveEstimate();
+    if (!estimate || !reading || !reading.valid) return null;
+    const w = all.weights;
+    const hr = Number(reading.hs);
+    const hrScore = Math.max(0, 100 - Math.max(0, hr - 75) * .8 - Math.max(0, 55 - hr) * 1.5);
+    const rm = Number(reading.rm);
+    const hrvScore = Number.isFinite(rm) ? Math.min(100, rm / all.hrvFullScoreMs * 100) : 50;
+    const sleepScore = Math.max(0, Math.min(100, estimate.sleep.sleepMinutes / all.sleepTargetMinutes * 100)
+      - (estimate.sleep.broken ? all.brokenSleepPenalty : 0));
+    const stateScore = all.stateScore[reading.state] !== undefined ? all.stateScore[reading.state] : 60;
+    const score = w.heartRate * hrScore + w.hrv * hrvScore + w.sleep * sleepScore
+      + w.recovery * estimatedRecovery() + w.state * stateScore;
+    return Math.round(Math.max(0, Math.min(100, score)));
+  }
+
+  function renderSleepStages(estimate) {
+    const box = document.getElementById("sleepStages");
+    box.hidden = !estimate;
+    const bar = document.getElementById("sleepStageBar");
+    const legend = document.getElementById("sleepStageLegend");
+    bar.replaceChildren();
+    legend.replaceChildren();
+    if (!estimate) return;
+    const stages = estimate.sleep.stages || [];
+    const total = stages.reduce((sum, stage) => sum + stage.minutes, 0) || 1;
+    stages.forEach(stage => {
+      const color = SLEEP_STAGE_COLORS[stage.name] || "rgba(255,255,255,.7)";
+      const segment = document.createElement("span");
+      segment.style.width = (stage.minutes / total * 100).toFixed(1) + "%";
+      segment.style.background = color;
+      bar.appendChild(segment);
+      const item = document.createElement("span");
+      const dot = document.createElement("i");
+      dot.style.background = color;
+      item.append(dot, document.createTextNode(stage.name + " " + formatDuration(stage.minutes)));
+      legend.appendChild(item);
+    });
+  }
+
+  function renderEstimates(reading) {
+    const estimate = liveEstimate();
+    document.getElementById("estimatesFooter").hidden = !estimate;
+    document.getElementById("recoveryEst").hidden = !estimate;
+    document.getElementById("recoveryUnavailable").hidden = !!estimate;
+    document.getElementById("recoveryUnavailableNote").hidden = !!estimate;
+    if (!estimate) return;
+    const recovery = estimatedRecovery();
+    setText("recoveryPercent", recovery);
+    setText("recoveryLabel", estimate.recovery.label);
+    document.getElementById("recoveryFill").style.width = recovery + "%";
+    document.getElementById("recoveryGauge").setAttribute("aria-label", "Estimated recovery " + recovery + " percent");
+    const score = estimatedHealthScore(reading);
+    if (score !== null) {
+      if (Health.get() !== score) Health.set(score);
+      setText("overallHealthState", "Estimated · " + (score >= 75 ? "Good" : score >= 50 ? "Fair" : "Needs attention"));
+    }
+    // Keep the SpO2 row of the baseline card filled with the estimate.
+    if (!document.getElementById("baselineCard").hidden) setText("baselineSpo2", formatMetric(estimatedSpo2(), METRIC_UNITS.spo2) + " (est.)");
   }
 
   function calculateDemoWellness(latest) {
@@ -2191,7 +2330,7 @@
       const from = shown, began = performance.now();
       const duration = 450 + Math.min(900, Math.abs(goal - from) * 11);
       const step = now => {
-        const t = Math.min(1, (now - began) / duration);
+        const t = Math.max(0, Math.min(1, (now - began) / duration));
         const eased = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         paint(from + (goal - from) * eased);
         if (t < 1) frame = requestAnimationFrame(step);
@@ -2319,6 +2458,9 @@
     liveLast = null;
     events = liveEvents;
     document.getElementById("ackNote").hidden = true;
+    renderEstimates(null);
+    renderDemoSleep();
+    Health.set(null, { immediate: true });
     if (!silent) {
       if (!adminAuthenticated) {
         openLoginScreen();
@@ -2392,18 +2534,27 @@
       const measurements = {};
       if (Number(baseline.heartRate) > 0) measurements.heartRate = trendComparison(Number(reading.hs), Number(baseline.heartRate));
       if (Number(baseline.hrv) > 0 && Number.isFinite(Number(reading.rm))) measurements.hrv = trendComparison(Number(reading.rm), Number(baseline.hrv));
+      // Risk Trend: during an alert the line rises step by step (demo heuristic, see riskRamp in demoEstimates.js).
+      let risk = reading.risk;
+      const ramp = (window.MONIBUDDY_ESTIMATES || {}).riskRamp;
+      if (reading.alert && ramp) {
+        let streak = 0;
+        for (let index = liveMonEvents.length - 1; index >= 0 && liveMonEvents[index].alertEpisode; index--) streak++;
+        risk = Math.min(ramp.cap, ramp.start + ramp.step * streak);
+      }
       const event = {
         event_id: "live-" + patient + "-" + reading.seq,
         patient_id: "live-" + patient,
         patientName: LIVE_PATIENTS[patient],
         state: reading.state,
-        risk: reading.risk,
+        risk,
+        alertEpisode: !!reading.alert,
         hr: Math.round(Number(reading.hs)),
         timestamp: new Date().toISOString(),
         personalBaseline: {
           heartRate: Number(baseline.heartRate) > 0 ? Number(baseline.heartRate) : undefined,
           hrv: Number(baseline.hrv) > 0 ? Number(baseline.hrv) : undefined,
-          spo2: null
+          spo2: estimatedSpo2()  // ESTIMATED, labelled "(est.)" on the card
         },
         live: true,
         liveSource: reading.source
@@ -2460,6 +2611,7 @@
       document.querySelector(".watch3d-heart").style.setProperty("--beat", Math.min(1.6, Math.max(.45, 60 / hr)).toFixed(2) + "s");
     }
     renderLiveCharts(reading);
+    renderEstimates(reading);
   }
 
   function renderLiveCharts(reading) {
