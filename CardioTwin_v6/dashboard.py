@@ -646,6 +646,15 @@ def main():
     else:
         header("live" if (mode == "live" and stream.state == "streaming") else ("replay" if mode == "replay" else "idle"))
 
+    # Embedded in the Moni-Buddy web dashboard (?view=monibuddy): only the live monitor and board tabs.
+    if st.query_params.get("view") == "monibuddy":
+        t_mon, t_brd = st.tabs(["Live monitor", "SK-AM62B board"])
+        with t_mon:
+            monitor_tab(mode, csv_choice, speed, loop)
+        with t_brd:
+            board_tab()
+        return
+
     t_mon, t_rev, t_brd, t_hw, t_exp, t_about = st.tabs(
         ["Live monitor", "Recording review", "SK-AM62B board", "Connect AFE", "Moni-Buddy export", "About"])
     with t_mon:
